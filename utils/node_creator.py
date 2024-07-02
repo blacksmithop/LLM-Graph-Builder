@@ -6,6 +6,7 @@ from utils.openi_core import embeddings
 import logging
 from hashlib import sha1
 from datetime import datetime
+from pathlib import Path
 
 
 UPDATE_GRAPH_CHUNKS_PROCESSED = 20
@@ -33,7 +34,9 @@ class NodeCreator:
         self.source_node.status = status
         self.source_node.total_chunks = len(chunks)
         self.source_node.total_pages = len(pages)
-        self.source_node.model = model\
+        self.source_node.model = model
+        self.update_source_node(obj_source_node, file_name)
+
             
         for i in range(0, len(chunks), UPDATE_GRAPH_CHUNKS_PROCESSED):
             select_chunks_upto = i + UPDATE_GRAPH_CHUNKS_PROCESSED
@@ -59,7 +62,45 @@ class NodeCreator:
             obj_source_node.relationship_count = rel_count
             self.update_source_node(obj_source_node, file_name)
     
-            
+    
+        result = self.neo4j.get_current_status_document_node(file_name)
+        is_cancelled_status = result[0]['is_cancelled']
+        if bool(is_cancelled_status) == True:
+            logging.info(f'Is_cancelled True at the end extraction')
+            job_status = 'Cancelled'
+        logging.info(f'Job Status at the end : {job_status}')
+        end_time = datetime.now()
+        processed_time = end_time - start_time
+        obj_source_node = SourceNode()
+        obj_source_node.file_name = file_name
+        obj_source_node.status = job_status
+        obj_source_node.processing_time = processed_time
+
+        self.update_source_node(obj_source_node, file_name)
+        logging.info('Updated the nodeCount and relCount properties in Docuemnt node')
+        logging.info(f'file:{file_name} extraction has been completed')
+        
+        
+        # self.delete_uploaded_local_file(merged_file_path, file_name)  
+      
+        return {
+            "fileName": file_name,
+            "nodeCount": node_count,
+            "relationshipCount": rel_count,
+            "processingTime": round(processed_time.total_seconds(),2),
+            "status" : job_status,
+            "model" : model,
+            "success_count" : 1
+        }
+    
+    
+    def delete_uploaded_local_file(merged_file_path, file_name):
+        file_path = Path(merged_file_path)
+        if file_path.exists():
+            file_path.unlink()
+            logging.info(f'file {file_name} deleted successfully')
+   
+      
     def process_chunks(self, file_name: str, chunks: List[Document]):
         chunkId_chunkDoc_list = self.create_relation_between_chunks(file_name, chunks)
         self.update_embedding_create_vector_index(chunkId_chunkDoc_list, file_name)
