@@ -5,7 +5,10 @@ from utils.neo4j_handler import Neo4J
 from utils.openi_core import embeddings
 import logging
 from hashlib import sha1
+from datetime import datetime
 
+
+UPDATE_GRAPH_CHUNKS_PROCESSED = 20
 
 class NodeCreator:
 
@@ -15,7 +18,7 @@ class NodeCreator:
         self.embeddings = embeddings
         self.EMBEDDING_DIM = 1536
 
-    def set_source_node_properties(
+    def set_node_properties(
         self,
         file_name: str,
         status: str,
@@ -23,16 +26,73 @@ class NodeCreator:
         chunks: List[Document],
         model: str,
     ):
+        
+        start_time = datetime.now()
+        
         self.source_node.file_name = file_name
         self.source_node.status = status
         self.source_node.total_chunks = len(chunks)
         self.source_node.total_pages = len(pages)
-        self.source_node.model = model
+        self.source_node.model = model\
+            
+        for i in range(0, len(chunks), UPDATE_GRAPH_CHUNKS_PROCESSED):
+            select_chunks_upto = i + UPDATE_GRAPH_CHUNKS_PROCESSED
+            logging.info(f'Selected Chunks upto: {select_chunks_upto}')
+            if len(chunks) <= select_chunks_upto:
+                select_chunks_upto = len(chunks)
+            selected_chunks = chunks[i:select_chunks_upto]
+            
+            result = self.neo4j.get_current_status_document_node(file_name)
+            is_cancelled_status = result[0]['is_cancelled']
+            logging.info(f"Is Cancelled : {result[0]['is_cancelled']}")
 
+            node_count,rel_count = self.process_chunks(file_name, selected_chunks)
+            end_time = datetime.now()
+            processed_time = end_time - start_time
+            
+            obj_source_node = SourceNode()
+            obj_source_node.file_name = file_name
+            obj_source_node.updated_at = end_time
+            obj_source_node.processing_time = processed_time
+            obj_source_node.node_count = node_count
+            obj_source_node.processed_chunk = select_chunks_upto
+            obj_source_node.relationship_count = rel_count
+            self.update_source_node(obj_source_node, file_name)
+    
+            
     def process_chunks(self, file_name: str, chunks: List[Document]):
         chunkId_chunkDoc_list = self.create_relation_between_chunks(file_name, chunks)
         self.update_embedding_create_vector_index(chunkId_chunkDoc_list, file_name)
-        
+
+        graph_documents = self.neo4j.generate_graph_documents(chunkId_chunkDoc_list)
+
+        self.save_graph_documents(graph_documents)
+
+        chunks_and_graphDocuments_list = self.get_chunk_graph_documents(graph_documents)
+
+        self.neo4j.merge_relationship_between_chunk_and_entites(
+            chunks_and_graphDocuments_list
+        )
+
+        distinct_nodes = set()
+        relations = []
+        for graph_document in graph_documents:
+            # get distinct nodes
+            for node in graph_document.nodes:
+                node_id = node.id
+                node_type = node.type
+                if (node_id, node_type) not in distinct_nodes:
+                    distinct_nodes.add((node_id, node_type))
+        # get all relations
+        for relation in graph_document.relationships:
+            relations.append(relation.type)
+
+        node_count += len(distinct_nodes)
+        rel_count += len(relations)
+        print(f"node count internal func:{node_count}")
+        print(f"relation count internal func:{rel_count}")
+        return node_count, rel_count
+
     def create_relation_between_chunks(self, file_name, chunks: List[Document]) -> List:
         logging.debug(f"Creating CHUNK relations")
 
@@ -105,7 +165,7 @@ class NodeCreator:
     def update_embedding_create_vector_index(self, chunkId_chunkDoc_list, file_name):
         # create embedding
         logging.debug("Updating Embeddings and creating Vector Index")
-        
+
         embeddings, dimension = self.embeddings, self.EMBEDDING_DIM
         logging.info(f"embedding model:{embeddings} and dimesion:{dimension}")
         data_for_query = []
@@ -140,3 +200,82 @@ class NodeCreator:
             query_to_create_embedding,
             params={"fileName": file_name, "data": data_for_query},
         )
+
+    def save_graph_documents(self, graph_document_list):
+        return self.neo4j.graph.add_graph_documents(graph_document_list)
+
+    def get_chunk_graph_documents(self, graph_document_list):
+        logging.info("Creating list of CHUNKS and GRAPH documents")
+        lst_chunk_chunkId_document = []
+        for graph_document in graph_document_list:
+            for chunk_id in graph_document.source.metadata["combined_chunk_ids"]:
+                lst_chunk_chunkId_document.append(
+                    {"graph_doc": graph_document, "chunk_id": chunk_id}
+                )
+
+        return lst_chunk_chunkId_document
+
+    def update_source_node(self, obj_source_node:SourceNode, file_name: str):
+        try:
+            params = {}
+            if obj_source_node.file_name is not None and obj_source_node.file_name != '':
+                params['fileName'] = obj_source_node.file_name
+
+            if obj_source_node.status is not None and obj_source_node.status != '':
+                params['status'] = obj_source_node.status
+
+            if obj_source_node.created_at is not None:
+                params['createdAt'] = obj_source_node.created_at
+
+            if obj_source_node.updated_at is not None:
+                params['updatedAt'] = obj_source_node.updated_at
+
+            if obj_source_node.processing_time is not None and obj_source_node.processing_time != 0:
+                params['processingTime'] = round(obj_source_node.processing_time.total_seconds(),2)
+
+            if obj_source_node.node_count is not None and obj_source_node.node_count != 0:
+                params['nodeCount'] = obj_source_node.node_count
+
+            if obj_source_node.relationship_count is not None and obj_source_node.relationship_count != 0:
+                params['relationshipCount'] = obj_source_node.relationship_count
+
+            if obj_source_node.model is not None and obj_source_node.model != '':
+                params['model'] = obj_source_node.model
+
+            if obj_source_node.total_pages is not None and obj_source_node.total_pages != 0:
+                params['total_pages'] = obj_source_node.total_pages
+
+            if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
+                params['total_chunks'] = obj_source_node.total_chunks
+
+            if obj_source_node.is_cancelled is not None and obj_source_node.is_cancelled != False:
+                params['is_cancelled'] = obj_source_node.is_cancelled
+
+            if obj_source_node.processed_chunk is not None and obj_source_node.processed_chunk != 0:
+                params['processed_chunk'] = obj_source_node.processed_chunk
+
+            param= {"props":params}
+            
+            print(f'Base Param value 1 : {param}')
+            query = "MERGE(d:Document {fileName :$props.fileName}) SET d += $props"
+            logging.info("Update source node properties")
+            self.neo4j.graph.query(query,param)
+        except Exception as e:
+            error_message = str(e)
+            self.update_exception_db(file_name,error_message)
+            raise Exception(error_message)
+        
+    def update_exception_db(self, file_name, exp_msg):
+        try:
+            job_status = "Failed"
+            result = self.neo4j.get_current_status_document_node(file_name)
+            is_cancelled_status = result[0]['is_cancelled']
+            if bool(is_cancelled_status) == True:
+                job_status = 'Cancelled'
+            self.neo4j.graph.query("""MERGE(d:Document {fileName :$fName}) SET d.status = $status, d.errorMessage = $error_msg""",
+                            {"fName":file_name, "status":job_status, "error_msg":exp_msg})
+        except Exception as e:
+            error_message = str(e)
+            logging.error(f"Error in updating document node status as failed: {error_message}")
+            raise Exception(error_message)
+        
