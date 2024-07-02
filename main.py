@@ -19,4 +19,4 @@ documents = get_documents_from_df(df=df)
 
 node = NodeCreator()
 
-node.set_node_properties(file_name=FILE_NAME, pages=documents, chunks=documents, model="gpt 3.5")
+node.set_node_properties(file_name=FILE_NAME, pages=documents, chunks=documents, model="gpt 3.5", status="Processing")
