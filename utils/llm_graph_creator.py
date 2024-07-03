@@ -1,5 +1,9 @@
 from langchain_experimental.graph_transformers import LLMGraphTransformer
-from langchain_experimental.graph_transformers.llm import _convert_to_graph_document, UnstructuredRelation, examples
+from langchain_experimental.graph_transformers.llm import (
+    _convert_to_graph_document,
+    UnstructuredRelation,
+    examples,
+)
 from langchain_core.documents import Document
 from langchain_community.graphs.graph_document import GraphDocument, Node, Relationship
 from typing import Any, Dict, cast, Optional, List
@@ -16,18 +20,21 @@ from langchain_core.output_parsers import JsonOutputParser
 langfuse_handler = CallbackHandler(
     secret_key="sk-lf-12ab7f6d-c911-4f9c-9475-e7d9e140ffd9",
     public_key="pk-lf-78c3dfa2-3a70-4e9a-9421-8a9e29b3973f",
-    host="http://localhost:3000"
+    host="http://localhost:3000",
 )
 
+
 class LLMGraphTransformerWithLogging(LLMGraphTransformer):
-    
+
     def process_response(self, document: Document) -> GraphDocument:
         """
         Processes a single document, transforming it into a graph document using
         an LLM based on the model's schema and constraints.
         """
         text = document.page_content
-        raw_schema = self.chain.invoke({"input": text}, config={"callbacks": [langfuse_handler]})
+        raw_schema = self.chain.invoke(
+            {"input": text}, config={"callbacks": [langfuse_handler]}
+        )
         if self._function_call:
             raw_schema = cast(Dict[Any, Any], raw_schema)
             nodes, relationships = _convert_to_graph_document(raw_schema)
@@ -74,10 +81,11 @@ class LLMGraphTransformerWithLogging(LLMGraphTransformer):
                 ]
 
         return GraphDocument(nodes=nodes, relationships=relationships, source=document)
-    
 
     def create_unstructured_prompt(
-        self, node_labels: Optional[List[str]] = None, rel_types: Optional[List[str]] = None
+        self,
+        node_labels: Optional[List[str]] = None,
+        rel_types: Optional[List[str]] = None,
     ) -> ChatPromptTemplate:
         node_labels_str = str(node_labels) if node_labels else ""
         rel_types_str = str(rel_types) if rel_types else ""
@@ -90,19 +98,25 @@ class LLMGraphTransformerWithLogging(LLMGraphTransformer):
             '"head_type", "relation", "tail", and "tail_type". The "head" '
             "key must contain the text of the extracted entity with one of the types "
             "from the provided list in the user prompt.",
-            f'The "head_type" key must contain the type of the extracted head entity, '
-            f"which must be one of the types from {node_labels_str}."
-            if node_labels
-            else "",
-            f'The "relation" key must contain the type of relation between the "head" '
-            f'and the "tail", which must be one of the relations from {rel_types_str}.'
-            if rel_types
-            else "",
-            f'The "tail" key must represent the text of an extracted entity which is '
-            f'the tail of the relation, and the "tail_type" key must contain the type '
-            f"of the tail entity from {node_labels_str}."
-            if node_labels
-            else "",
+            (
+                f'The "head_type" key must contain the type of the extracted head entity, '
+                f"which can be one of the types from {node_labels_str}. Use the following as reference"
+                if node_labels
+                else ""
+            ),
+            (
+                f'The "relation" key must contain the type of relation between the "head" '
+                f'and the "tail", which can be one of the relations from {rel_types_str}. Use the following as reference'
+                if rel_types
+                else ""
+            ),
+            (
+                f'The "tail" key must represent the text of an extracted entity which is '
+                f'the tail of the relation, and the "tail_type" key can contain the type '
+                f"of the tail entity from {node_labels_str}."
+                if node_labels
+                else ""
+            ),
             "Attempt to extract as many entities and relations as you can. Maintain "
             "Entity Consistency: When extracting entities, it's vital to ensure "
             'consistency. If an entity, such as "John Doe", is mentioned multiple '
