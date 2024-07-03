@@ -7,6 +7,11 @@ from dotenv import load_dotenv
 load_dotenv()
 coloredlogs.install(level='DEBUG')
 
+LOG_IGNORELIST = ["httpcore", "openai", "neo4j", ]
+
+for item in LOG_IGNORELIST:
+    logging.getLogger(item).setLevel(logging.WARNING)
+
 
 file_handler = LocalFileHandler()
 
