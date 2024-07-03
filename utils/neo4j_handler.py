@@ -3,7 +3,7 @@ from typing import List
 from os import getenv
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from utils.openi_core import gpt3_llm
+from utils.openi_core import gpt3_llm, gpt4_llm
 from utils.llm_graph_creator import LLMGraphTransformerWithLogging
 from concurrent.futures import as_completed
 from langchain.docstore.document import Document
@@ -75,7 +75,7 @@ class Neo4J:
         combined_chunk_document_list = self.get_combined_chunks(chunkId_chunkDoc_list)
 
         llm_transformer = LLMGraphTransformerWithLogging(
-            llm=gpt3_llm,
+            llm=gpt4_llm, #gpt3_llm,
             node_properties=["description"],
             allowed_nodes=allowed_nodes,
             allowed_relationships=allowed_relationship,
@@ -97,8 +97,7 @@ class Neo4J:
             "Getting Page Content"
         )
         combined_chunk_document_list = []
-        
-        logging.error(chunkId_chunkDoc_list[0]["chunk_doc"].metadata.keys())
+    
         
         # combined_chunks_page_content = [
         #     "".join(
@@ -113,7 +112,7 @@ class Neo4J:
             combined_chunk_document_list.append(
                 Document(
                     page_content=document["chunk_doc"].page_content,
-                    metadata={"combined_chunk_ids": document["chunk_id"]},
+                    metadata={"combined_chunk_ids": document["chunk_id"], "insightID": document["chunk_doc"].metadata["insightID"]},
                 )
             )
         return combined_chunk_document_list
