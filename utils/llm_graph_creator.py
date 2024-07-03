@@ -15,6 +15,7 @@ from langchain_core.prompts import (
 )
 from langchain_core.messages import SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
+import logging
 
 
 langfuse_handler = CallbackHandler(
@@ -87,6 +88,8 @@ class LLMGraphTransformerWithLogging(LLMGraphTransformer):
         node_labels: Optional[List[str]] = None,
         rel_types: Optional[List[str]] = None,
     ) -> ChatPromptTemplate:
+        logging.warning("Using custom prompt")
+        
         node_labels_str = str(node_labels) if node_labels else ""
         rel_types_str = str(rel_types) if rel_types else ""
         base_string_parts = [
