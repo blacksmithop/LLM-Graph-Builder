@@ -89,7 +89,7 @@ class LLMGraphTransformerWithLogging(LLMGraphTransformer):
         rel_types: Optional[List[str]] = None,
     ) -> ChatPromptTemplate:
         logging.warning("Using custom prompt")
-        
+
         node_labels_str = str(node_labels) if node_labels else ""
         rel_types_str = str(rel_types) if rel_types else ""
         base_string_parts = [

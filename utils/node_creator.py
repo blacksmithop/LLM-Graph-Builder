@@ -19,8 +19,11 @@ class NodeCreator:
         self.neo4j = Neo4J()
         self.embeddings = embeddings
         self.EMBEDDING_DIM = 1536
+        
+        self.allowed_nodes = []
+        self.allowed_relationships = []
 
-    def set_node_properties(
+    def create_neo4j_graph(
         self,
         file_name: str,
         status: str,
@@ -45,10 +48,6 @@ class NodeCreator:
                 select_chunks_upto = len(chunks)
             selected_chunks = chunks[i:select_chunks_upto]
 
-            result = self.neo4j.get_current_status_document_node(file_name)
-            is_cancelled_status = result[0]["is_cancelled"]
-            logging.info(f"Is Cancelled : {result[0]['is_cancelled']}")
-
             node_count, rel_count = self.process_chunks(file_name, selected_chunks)
             end_time = datetime.now()
             processed_time = end_time - start_time
@@ -62,8 +61,6 @@ class NodeCreator:
             obj_source_node.relationship_count = rel_count
             self.update_source_node(obj_source_node, file_name)
 
-        result = self.neo4j.get_current_status_document_node(file_name)
-      
         end_time = datetime.now()
         processed_time = end_time - start_time
         obj_source_node = SourceNode()
@@ -99,7 +96,7 @@ class NodeCreator:
         logging.error(f"{len(chunkId_chunkDoc_list)=}")
         self.update_embedding_create_vector_index(chunkId_chunkDoc_list, file_name)
 
-        graph_documents = self.neo4j.generate_graph_documents(chunkId_chunkDoc_list)
+        graph_documents = self.neo4j.generate_graph_documents(chunkId_chunkDoc_list=chunkId_chunkDoc_list, allowed_nodes=self.allowed_nodes, allowed_relationship=self.allowed_relationships)
 
         self.save_graph_documents(graph_documents)
 
