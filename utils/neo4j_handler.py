@@ -1,20 +1,21 @@
 from langchain_community.graphs import Neo4jGraph
-from langchain_experimental.graph_transformers import LLMGraphTransformer
-
 from typing import List
 from os import getenv
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from utils.openi_core import gpt3_llm
+from utils.llm_graph_creator import LLMGraphTransformerWithLogging
 from concurrent.futures import as_completed
 from langchain.docstore.document import Document
+import logging
 
 
-CHUNKS_TO_COMBINE = 6
+CHUNKS_TO_COMBINE = 1 # TODO: Refactor to support 0 / remove argument
 
 
 class Neo4J:
     def __init__(self) -> None:
+        logging.error(getenv("NEO4J_URL"))
         self.graph = Neo4jGraph(
             url=getenv("NEO4J_URL"),
             database=getenv("NEO4J_DATABASE"),
@@ -73,7 +74,7 @@ class Neo4J:
 
         combined_chunk_document_list = self.get_combined_chunks(chunkId_chunkDoc_list)
 
-        llm_transformer = LLMGraphTransformer(
+        llm_transformer = LLMGraphTransformerWithLogging(
             llm=gpt3_llm,
             node_properties=["description"],
             allowed_nodes=allowed_nodes,
@@ -96,6 +97,9 @@ class Neo4J:
             f"Combining {CHUNKS_TO_COMBINE} chunks before sending request to LLM"
         )
         combined_chunk_document_list = []
+        
+        logging.error(chunkId_chunkDoc_list[0]["chunk_doc"].metadata.keys())
+        
         combined_chunks_page_content = [
             "".join(
                 document["chunk_doc"].page_content
