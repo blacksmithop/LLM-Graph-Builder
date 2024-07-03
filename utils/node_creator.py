@@ -63,16 +63,12 @@ class NodeCreator:
             self.update_source_node(obj_source_node, file_name)
 
         result = self.neo4j.get_current_status_document_node(file_name)
-        is_cancelled_status = result[0]["is_cancelled"]
-        if bool(is_cancelled_status) == True:
-            logging.info(f"Is_cancelled True at the end extraction")
-            job_status = "Cancelled"
-        logging.info(f"Job Status at the end : {job_status}")
+      
         end_time = datetime.now()
         processed_time = end_time - start_time
         obj_source_node = SourceNode()
         obj_source_node.file_name = file_name
-        obj_source_node.status = job_status
+        obj_source_node.status = "Completed"
         obj_source_node.processing_time = processed_time
 
         self.update_source_node(obj_source_node, file_name)
@@ -86,7 +82,7 @@ class NodeCreator:
             "nodeCount": node_count,
             "relationshipCount": rel_count,
             "processingTime": round(processed_time.total_seconds(), 2),
-            "status": job_status,
+            "status": "Completed",
             "model": model,
             "success_count": 1,
         }
