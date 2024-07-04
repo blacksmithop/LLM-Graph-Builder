@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast, Sequence
 
 from langchain_community.graphs.graph_document import (GraphDocument, Node,
                                                        Relationship)
@@ -12,6 +12,9 @@ from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_experimental.graph_transformers.llm import (
     UnstructuredRelation, _convert_to_graph_document, examples)
 from langfuse.callback import CallbackHandler
+from time import sleep
+import logging
+
 
 langfuse_handler = CallbackHandler(
     secret_key="sk-lf-12ab7f6d-c911-4f9c-9475-e7d9e140ffd9",
@@ -19,14 +22,40 @@ langfuse_handler = CallbackHandler(
     host="http://localhost:3000",
 )
 
+SLEEP_TIME = 30
 
 class LLMGraphTransformerWithLogging(LLMGraphTransformer):
 
+
+    def convert_to_graph_documents(
+        self, documents: Sequence[Document]
+    ) -> List[GraphDocument]:
+        """Convert a sequence of documents into graph documents.
+
+        Args:
+            documents (Sequence[Document]): The original documents.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            Sequence[GraphDocument]: The transformed documents as graphs.
+        """
+        results = []
+        
+        for index, document in enumerate(documents, start=1):
+            response = self.process_response(document)
+            results.append(response)
+            logging.info(f"[Process_{index}] Sleeping for {SLEEP_TIME} seconds 💤💤")
+            sleep(SLEEP_TIME)
+            
+        return results
+    
     def process_response(self, document: Document) -> GraphDocument:
         """
         Processes a single document, transforming it into a graph document using
         an LLM based on the model's schema and constraints.
         """
+
+        
         text = document.page_content
         raw_schema = self.chain.invoke(
             {"input": text}, config={"callbacks": [langfuse_handler]}
