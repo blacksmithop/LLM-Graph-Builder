@@ -29,12 +29,13 @@ FILE_PATH = f"./static/{FILE_NAME}"
 
 df = file_handler.read_local_file(FILE_PATH)
 
-documents = get_documents_from_df(df=df)
+documents = get_documents_from_df(df=df)[:20]
+
 
 node = NodeCreator()
 
 node.allowed_nodes = allowed_nodes
-node.allowed_relationships = allowed_relations
+node.allowed_relationships = allowed_relations[:5]
 
 node.create_neo4j_graph(
     file_name=FILE_NAME,
