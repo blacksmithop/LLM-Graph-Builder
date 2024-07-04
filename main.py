@@ -35,7 +35,10 @@ documents = get_documents_from_df(df=df)
 node = NodeCreator()
 
 node.allowed_nodes = allowed_nodes
-node.allowed_relationships = [] #allowed_relations[:5]
+node.allowed_relationships = allowed_relations[:20]
+
+logging.info(f"Passing {len(node.allowed_nodes)} nodes and {len(node.allowed_relationships)} relationships as Examples")
+logging.debug(f"Relationships: {node.allowed_relationships}")
 
 node.create_neo4j_graph(
     file_name=FILE_NAME,

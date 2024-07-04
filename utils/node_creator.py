@@ -96,7 +96,6 @@ class NodeCreator:
 
         self.update_embedding_create_vector_index(chunkId_chunkDoc_list, file_name)
 
-        logging.info(f"Found {len(self.allowed_nodes)} nodes and {len(self.allowed_relationships)} relationships")
         graph_documents = self.neo4j.generate_graph_documents(
             chunkId_chunkDoc_list=chunkId_chunkDoc_list,
             allowed_nodes=self.allowed_nodes,
