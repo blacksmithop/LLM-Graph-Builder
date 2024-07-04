@@ -22,8 +22,9 @@ for item in LOG_IGNORELIST:
 
 file_handler = LocalFileHandler()
 
-FILE_PATH = "./static/XflyAIToolkitInsights.csv"
-FILE_NAME = "XflyAIToolkitInsights.csv"
+FILE_NAME = "Demo_Cleaned_Insight.xlsx"
+
+FILE_PATH = f"./static/{FILE_NAME}"
 
 df = file_handler.read_local_file(FILE_PATH)
 
