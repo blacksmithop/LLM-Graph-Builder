@@ -1,16 +1,21 @@
 import logging
-from typing import Any, Dict, List, Optional, cast, Sequence
+from typing import Any, Dict, List, Optional, cast #, Sequence
 
-from langchain_community.graphs.graph_document import (GraphDocument, Node,
-                                                       Relationship)
+from langchain_community.graphs.graph_document import GraphDocument, Node, Relationship
 from langchain_core.documents import Document
 from langchain_core.messages import SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import (ChatPromptTemplate,
-                                    HumanMessagePromptTemplate, PromptTemplate)
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    PromptTemplate,
+)
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from langchain_experimental.graph_transformers.llm import (
-    UnstructuredRelation, _convert_to_graph_document, examples)
+    UnstructuredRelation,
+    _convert_to_graph_document,
+    examples,
+)
 from langfuse.callback import CallbackHandler
 from time import sleep
 import logging
@@ -24,38 +29,37 @@ langfuse_handler = CallbackHandler(
 
 SLEEP_TIME = 30
 
+
 class LLMGraphTransformerWithLogging(LLMGraphTransformer):
 
+    # def convert_to_graph_documents(
+    #     self, documents: Sequence[Document]
+    # ) -> List[GraphDocument]:
+    #     """Convert a sequence of documents into graph documents.
 
-    def convert_to_graph_documents(
-        self, documents: Sequence[Document]
-    ) -> List[GraphDocument]:
-        """Convert a sequence of documents into graph documents.
+    #     Args:
+    #         documents (Sequence[Document]): The original documents.
+    #         **kwargs: Additional keyword arguments.
 
-        Args:
-            documents (Sequence[Document]): The original documents.
-            **kwargs: Additional keyword arguments.
+    #     Returns:
+    #         Sequence[GraphDocument]: The transformed documents as graphs.
+    #     """
+    #     results = []
 
-        Returns:
-            Sequence[GraphDocument]: The transformed documents as graphs.
-        """
-        results = []
-        
-        for index, document in enumerate(documents, start=1):
-            response = self.process_response(document)
-            results.append(response)
-            logging.info(f"[Process_{index}] Sleeping for {SLEEP_TIME} seconds 💤💤")
-            sleep(SLEEP_TIME)
-            
-        return results
-    
+    #     for index, document in enumerate(documents, start=1):
+    #         response = self.process_response(document)
+    #         results.append(response)
+    #         logging.info(f"[Process_{index}] Sleeping for {SLEEP_TIME} seconds 💤💤")
+    #         sleep(SLEEP_TIME)
+
+    #     return results
+
     def process_response(self, document: Document) -> GraphDocument:
         """
         Processes a single document, transforming it into a graph document using
         an LLM based on the model's schema and constraints.
         """
 
-        
         text = document.page_content
         raw_schema = self.chain.invoke(
             {"input": text}, config={"callbacks": [langfuse_handler]}
@@ -127,19 +131,19 @@ class LLMGraphTransformerWithLogging(LLMGraphTransformer):
             "from the provided list in the user prompt.",
             (
                 f'The "head_type" key must contain the type of the extracted head entity, '
-                f"which can be one of the types from {node_labels_str}. Use them as reference"
+                f"which must be one of the types from {node_labels_str}."
                 if node_labels
                 else ""
             ),
             (
                 f'The "relation" key must contain the type of relation between the "head" '
-                f'and the "tail", which may  be one of the relations from {rel_types_str}. Use them as reference'
+                f'and the "tail", which must be one of the relations from {rel_types_str}.'
                 if rel_types
                 else ""
             ),
             (
                 f'The "tail" key must represent the text of an extracted entity which is '
-                f'the tail of the relation, and the "tail_type" key may contain the type '
+                f'the tail of the relation, and the "tail_type" key must contain the type '
                 f"of the tail entity from {node_labels_str}."
                 if node_labels
                 else ""
