@@ -127,19 +127,19 @@ class LLMGraphTransformerWithLogging(LLMGraphTransformer):
             "from the provided list in the user prompt.",
             (
                 f'The "head_type" key must contain the type of the extracted head entity, '
-                f"which can be one of the types from {node_labels_str}. Use the following as reference"
+                f"which can be one of the types from {node_labels_str}. Use them as reference"
                 if node_labels
                 else ""
             ),
             (
                 f'The "relation" key must contain the type of relation between the "head" '
-                f'and the "tail", which can be one of the relations from {rel_types_str}. Use the following as reference'
+                f'and the "tail", which may  be one of the relations from {rel_types_str}. Use them as reference'
                 if rel_types
                 else ""
             ),
             (
                 f'The "tail" key must represent the text of an extracted entity which is '
-                f'the tail of the relation, and the "tail_type" key can contain the type '
+                f'the tail of the relation, and the "tail_type" key may contain the type '
                 f"of the tail entity from {node_labels_str}."
                 if node_labels
                 else ""
