@@ -94,7 +94,6 @@ class NodeCreator:
     def process_chunks(self, file_name: str, chunks: List[Document]):
         chunkId_chunkDoc_list = self.create_relation_between_chunks(file_name, chunks)
 
-        logging.error(f"{len(chunkId_chunkDoc_list)=}")
         self.update_embedding_create_vector_index(chunkId_chunkDoc_list, file_name)
 
         graph_documents = self.neo4j.generate_graph_documents(

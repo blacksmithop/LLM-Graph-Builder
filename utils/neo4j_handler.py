@@ -14,7 +14,6 @@ CHUNKS_TO_COMBINE = 1  # TODO: Refactor to support 0 / remove argument
 
 class Neo4J:
     def __init__(self) -> None:
-        logging.error(getenv("NEO4J_URL"))
         self.graph = Neo4jGraph(
             url=getenv("NEO4J_URL"),
             database=getenv("NEO4J_DATABASE"),
