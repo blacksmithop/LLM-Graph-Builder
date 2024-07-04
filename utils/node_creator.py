@@ -1,13 +1,14 @@
-from utils.models import SourceNode
-from langchain.docstore.document import Document
+import logging
+from datetime import datetime
+from hashlib import sha1
+from pathlib import Path
 from typing import List
+
+from langchain.docstore.document import Document
+
+from utils.models import SourceNode
 from utils.neo4j_handler import Neo4J
 from utils.openi_core import embeddings
-import logging
-from hashlib import sha1
-from datetime import datetime
-from pathlib import Path
-
 
 UPDATE_GRAPH_CHUNKS_PROCESSED = 20
 
@@ -19,7 +20,7 @@ class NodeCreator:
         self.neo4j = Neo4J()
         self.embeddings = embeddings
         self.EMBEDDING_DIM = 1536
-        
+
         self.allowed_nodes = []
         self.allowed_relationships = []
 
@@ -96,7 +97,11 @@ class NodeCreator:
         logging.error(f"{len(chunkId_chunkDoc_list)=}")
         self.update_embedding_create_vector_index(chunkId_chunkDoc_list, file_name)
 
-        graph_documents = self.neo4j.generate_graph_documents(chunkId_chunkDoc_list=chunkId_chunkDoc_list, allowed_nodes=self.allowed_nodes, allowed_relationship=self.allowed_relationships)
+        graph_documents = self.neo4j.generate_graph_documents(
+            chunkId_chunkDoc_list=chunkId_chunkDoc_list,
+            allowed_nodes=self.allowed_nodes,
+            allowed_relationship=self.allowed_relationships,
+        )
 
         self.save_graph_documents(graph_documents)
 
@@ -193,7 +198,7 @@ class NodeCreator:
                         "current_chunk_id": current_chunk_id,
                     }
                 )
-                
+
         query_to_create_chunk_and_PART_OF_relation = """
         UNWIND $batch_data AS data
         MERGE (c:Chunk {id: data.id})

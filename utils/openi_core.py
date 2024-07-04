@@ -1,10 +1,10 @@
+from os import getenv
+
+from dotenv import load_dotenv
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.storage import LocalFileStore
 from langchain_openai import (AzureChatOpenAI, AzureOpenAI,
                               AzureOpenAIEmbeddings)
-from os import getenv
-from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -16,7 +16,10 @@ underlying_embeddings = AzureOpenAIEmbeddings(
 store = LocalFileStore("./cache/")
 
 embeddings = CacheBackedEmbeddings.from_bytes_store(
-    underlying_embeddings, store, namespace=underlying_embeddings.model, query_embedding_cache=True
+    underlying_embeddings,
+    store,
+    namespace=underlying_embeddings.model,
+    query_embedding_cache=True,
 )
 
 # OpenAI Completion
@@ -28,7 +31,8 @@ gpt4_llm = AzureChatOpenAI(
     deployment_name=getenv("GPT4_DEPLOYMENT_NAME"),
     api_key=getenv("GPT4_OPENAI_API_KEY"),
     api_version=getenv("OPENAI_API_VERSION"),
-    temperature=0, max_tokens=4000
+    temperature=0,
+    max_tokens=4000,
 )
 
 
@@ -37,11 +41,11 @@ gpt3_llm = AzureChatOpenAI(
     deployment_name=getenv("GPT3_DEPLOYMENT_NAME"),
     api_key=getenv("GPT3_OPENAI_API_KEY"),
     api_version=getenv("OPENAI_API_VERSION"),
-    temperature=0.4, max_tokens=1000,
+    temperature=0.4,
+    max_tokens=1000,
 )
 
 if __name__ == "__main__":
     print(embeddings.embed_query("Hi")[:5])
     print(gpt3_llm.invoke("Tell me a joke").content)
     print(gpt4_llm.invoke("Tell me a joke").content)
-

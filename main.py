@@ -1,13 +1,20 @@
-from utils.file_handler import LocalFileHandler
-from utils.create_document import get_documents_from_df
-from utils.node_creator import NodeCreator
-import coloredlogs, logging
+import logging
+
+import coloredlogs
 from dotenv import load_dotenv
 
-load_dotenv()
-coloredlogs.install(level='DEBUG')
+from utils.create_document import get_documents_from_df
+from utils.file_handler import LocalFileHandler
+from utils.node_creator import NodeCreator
 
-LOG_IGNORELIST = ["httpcore", "openai", "neo4j", ]
+load_dotenv()
+coloredlogs.install(level="DEBUG")
+
+LOG_IGNORELIST = [
+    "httpcore",
+    "openai",
+    "neo4j",
+]
 
 for item in LOG_IGNORELIST:
     logging.getLogger(item).setLevel(logging.WARNING)
@@ -27,4 +34,10 @@ node = NodeCreator()
 node.allowed_nodes = []
 node.allowed_relationships = []
 
-node.create_neo4j_graph(file_name=FILE_NAME, pages=documents, chunks=documents, model="gpt 3.5", status="Processing")
+node.create_neo4j_graph(
+    file_name=FILE_NAME,
+    pages=documents,
+    chunks=documents,
+    model="gpt 3.5",
+    status="Processing",
+)

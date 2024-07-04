@@ -1,16 +1,15 @@
-from langchain_community.graphs import Neo4jGraph
-from typing import List
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from os import getenv
-import logging
-from concurrent.futures import ThreadPoolExecutor
-from utils.openi_core import gpt3_llm, gpt4_llm
-from utils.llm_graph_creator import LLMGraphTransformerWithLogging
-from concurrent.futures import as_completed
+from typing import List
+
 from langchain.docstore.document import Document
-import logging
+from langchain_community.graphs import Neo4jGraph
 
+from utils.llm_graph_creator import LLMGraphTransformerWithLogging
+from utils.openi_core import gpt3_llm, gpt4_llm
 
-CHUNKS_TO_COMBINE = 1 # TODO: Refactor to support 0 / remove argument
+CHUNKS_TO_COMBINE = 1  # TODO: Refactor to support 0 / remove argument
 
 
 class Neo4J:
@@ -75,7 +74,7 @@ class Neo4J:
         combined_chunk_document_list = self.get_combined_chunks(chunkId_chunkDoc_list)
 
         llm_transformer = LLMGraphTransformerWithLogging(
-            llm=gpt4_llm, #gpt3_llm,
+            llm=gpt4_llm,  # gpt3_llm,
             node_properties=["description"],
             allowed_nodes=allowed_nodes,
             allowed_relationships=allowed_relationship,
@@ -93,12 +92,9 @@ class Neo4J:
         return graph_document_list
 
     def get_combined_chunks(self, chunkId_chunkDoc_list):
-        logging.info(
-            "Getting Page Content"
-        )
+        logging.info("Getting Page Content")
         combined_chunk_document_list = []
-    
-        
+
         # combined_chunks_page_content = [
         #     "".join(
         #         document["chunk_doc"].page_content
@@ -106,31 +102,35 @@ class Neo4J:
         #     )
         #     for i in range(0, len(chunkId_chunkDoc_list), CHUNKS_TO_COMBINE)
         # ]
-        
 
         for document in chunkId_chunkDoc_list:
             combined_chunk_document_list.append(
                 Document(
                     page_content=document["chunk_doc"].page_content,
-                    metadata={"combined_chunk_ids": document["chunk_id"], "insightID": document["chunk_doc"].metadata["insightID"]},
+                    metadata={
+                        "combined_chunk_ids": document["chunk_id"],
+                        "insightID": document["chunk_doc"].metadata["insightID"],
+                    },
                 )
             )
         return combined_chunk_document_list
 
-    def merge_relationship_between_chunk_and_entites(self, graph_documents_chunk_chunk_Id: List):
+    def merge_relationship_between_chunk_and_entites(
+        self, graph_documents_chunk_chunk_Id: List
+    ):
         batch_data = []
         logging.info("Create HAS_ENTITY relationship between chunks and entities")
         chunk_node_id_set = 'id:"{}"'
-        
+
         for graph_doc_chunk_id in graph_documents_chunk_chunk_Id:
-            for node in graph_doc_chunk_id['graph_doc'].nodes:
-                query_data={
-                    'chunk_id': graph_doc_chunk_id['chunk_id'],
-                    'node_type': node.type,
-                    'node_id': node.id
+            for node in graph_doc_chunk_id["graph_doc"].nodes:
+                query_data = {
+                    "chunk_id": graph_doc_chunk_id["chunk_id"],
+                    "node_type": node.type,
+                    "node_id": node.id,
                 }
                 batch_data.append(query_data)
-            
+
         if batch_data:
             unwind_query = """
                         UNWIND $batch_data AS data

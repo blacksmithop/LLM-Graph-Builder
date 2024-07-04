@@ -1,22 +1,17 @@
-from langchain_experimental.graph_transformers import LLMGraphTransformer
-from langchain_experimental.graph_transformers.llm import (
-    _convert_to_graph_document,
-    UnstructuredRelation,
-    examples,
-)
+import logging
+from typing import Any, Dict, List, Optional, cast
+
+from langchain_community.graphs.graph_document import (GraphDocument, Node,
+                                                       Relationship)
 from langchain_core.documents import Document
-from langchain_community.graphs.graph_document import GraphDocument, Node, Relationship
-from typing import Any, Dict, cast, Optional, List
-from langfuse.callback import CallbackHandler
-from langchain_core.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    PromptTemplate,
-)
 from langchain_core.messages import SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
-import logging
-
+from langchain_core.prompts import (ChatPromptTemplate,
+                                    HumanMessagePromptTemplate, PromptTemplate)
+from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain_experimental.graph_transformers.llm import (
+    UnstructuredRelation, _convert_to_graph_document, examples)
+from langfuse.callback import CallbackHandler
 
 langfuse_handler = CallbackHandler(
     secret_key="sk-lf-12ab7f6d-c911-4f9c-9475-e7d9e140ffd9",
