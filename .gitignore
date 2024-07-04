@@ -169,3 +169,8 @@ cython_debug/
 
 # Jupyter notebook
 *.ipynb
+
+# Datasets
+*.xlsx
+*.xls
+*.csv
