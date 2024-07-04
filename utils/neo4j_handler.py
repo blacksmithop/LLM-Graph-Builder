@@ -45,15 +45,6 @@ class Neo4J:
     ):
         logging.info("Creating GRAPH documents")
 
-        if allowed_nodes is None or allowed_nodes == "":
-            allowed_nodes = []
-        else:
-            allowed_nodes = allowed_nodes.split(",")
-        if allowed_relationship is None or allowed_relationship == "":
-            allowed_relationship = []
-        else:
-            allowed_relationship = allowed_relationship.split(",")
-
         logging.debug(
             f"Allowed Nodes: {allowed_nodes}, Allowed Relationship: {allowed_relationship}"
         )
