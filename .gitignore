@@ -174,3 +174,4 @@ cython_debug/
 *.xlsx
 *.xls
 *.csv
+/utils/constants.py
