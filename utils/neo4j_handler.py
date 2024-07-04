@@ -64,11 +64,13 @@ class Neo4J:
         combined_chunk_document_list = self.get_combined_chunks(chunkId_chunkDoc_list)
 
         llm_transformer = LLMGraphTransformerWithLogging(
-            llm=gpt4_llm,  # gpt3_llm,
+            llm=gpt3_llm,
             node_properties=["description"],
             allowed_nodes=allowed_nodes,
             allowed_relationships=allowed_relationship,
         )
+        
+        
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             for chunk in combined_chunk_document_list:

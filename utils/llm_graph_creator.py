@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, cast #, Sequence
+from typing import Any, Dict, List, Optional, Union, cast  # , Sequence
 
 from langchain_community.graphs.graph_document import GraphDocument, Node, Relationship
 from langchain_core.documents import Document
@@ -15,7 +15,11 @@ from langchain_experimental.graph_transformers.llm import (
     UnstructuredRelation,
     _convert_to_graph_document,
     examples,
+    _Graph,
+    create_simple_model,
+    default_prompt,
 )
+from langchain_core.language_models import BaseLanguageModel
 from langfuse.callback import CallbackHandler
 from time import sleep
 import logging
@@ -32,27 +36,67 @@ SLEEP_TIME = 30
 
 class LLMGraphTransformerWithLogging(LLMGraphTransformer):
 
-    # def convert_to_graph_documents(
-    #     self, documents: Sequence[Document]
-    # ) -> List[GraphDocument]:
-    #     """Convert a sequence of documents into graph documents.
+    # def __init__(
+    #     self,
+    #     llm: BaseLanguageModel,
+    #     allowed_nodes: List[str] = [],
+    #     allowed_relationships: List[str] = [],
+    #     prompt: Optional[ChatPromptTemplate] = None,
+    #     strict_mode: bool = True,
+    #     node_properties: Union[bool, List[str]] = False,
+    #     relationship_properties: Union[bool, List[str]] = False,
+    # ) -> None:
+    #     self.allowed_nodes = allowed_nodes
+    #     self.allowed_relationships = allowed_relationships
+    #     self.strict_mode = strict_mode
+    #     self._function_call = True
+    #     # Check if the LLM really supports structured output
+    #     try:
+    #         llm.with_structured_output(_Graph)
+    #     except NotImplementedError:
+    #         self._function_call = False
+    #     if not self._function_call:
+    #         if node_properties or relationship_properties:
+    #             raise ValueError(
+    #                 "The 'node_properties' and 'relationship_properties' parameters "
+    #                 "cannot be used in combination with a LLM that doesn't support "
+    #                 "native function calling."
+    #             )
+    #         try:
+    #             import json_repair  # type: ignore
 
-    #     Args:
-    #         documents (Sequence[Document]): The original documents.
-    #         **kwargs: Additional keyword arguments.
+    #             self.json_repair = json_repair
+    #         except ImportError:
+    #             raise ImportError(
+    #                 "Could not import json_repair python package. "
+    #                 "Please install it with `pip install json-repair`."
+    #             )
+    #         prompt = self.create_unstructured_prompt(
+    #             allowed_nodes, allowed_relationships
+    #         )
+    #         self.chain = prompt | llm
+    #     else:
+    #         # Define chain
+    #         try:
+    #             llm_type = llm._llm_type  # type: ignore
+    #         except AttributeError:
+    #             llm_type = None
+    #         schema = create_simple_model(
+    #             allowed_nodes,
+    #             allowed_relationships,
+    #             node_properties,
+    #             llm_type,
+    #             relationship_properties,
+    #         )
+            
+    #         prompt = self.create_unstructured_prompt(
+    #             allowed_nodes, allowed_relationships
+    #         )
+    #         logging.warning("[USING CUSTOM PROMPT (Second)]")
 
-    #     Returns:
-    #         Sequence[GraphDocument]: The transformed documents as graphs.
-    #     """
-    #     results = []
-
-    #     for index, document in enumerate(documents, start=1):
-    #         response = self.process_response(document)
-    #         results.append(response)
-    #         logging.info(f"[Process_{index}] Sleeping for {SLEEP_TIME} seconds 💤💤")
-    #         sleep(SLEEP_TIME)
-
-    #     return results
+    #         structured_llm = llm.with_structured_output(schema, include_raw=True)
+    #         prompt = prompt or default_prompt
+    #         self.chain = prompt | structured_llm
 
     def process_response(self, document: Document) -> GraphDocument:
         """
@@ -116,7 +160,8 @@ class LLMGraphTransformerWithLogging(LLMGraphTransformer):
         node_labels: Optional[List[str]] = None,
         rel_types: Optional[List[str]] = None,
     ) -> ChatPromptTemplate:
-        logging.warning("Using custom prompt")
+        
+        logging.warning("[USING CUSTOM PROMPT]")
 
         node_labels_str = str(node_labels) if node_labels else ""
         rel_types_str = str(rel_types) if rel_types else ""
