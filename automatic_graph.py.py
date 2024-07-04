@@ -3,10 +3,10 @@ import logging
 import coloredlogs
 from dotenv import load_dotenv
 
-from utils.create_document import get_documents_from_df
-from utils.file_handler import LocalFileHandler
-from utils.node_creator import NodeCreator
-from utils.constants import allowed_relations, allowed_nodes
+from utils.common.create_document import get_documents_from_df
+from utils.common.file_handler import LocalFileHandler
+from utils.automatic.node_creator import NodeCreator
+from utils.common.constants import allowed_relations, allowed_nodes
 
 load_dotenv()
 coloredlogs.install(level="DEBUG")
