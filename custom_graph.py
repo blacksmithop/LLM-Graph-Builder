@@ -33,10 +33,7 @@ neo4j = Neo4J()
 
 # documents = get_documents_from_df(df=df, insight_column="Insight", id_column="InsightID")
 
+# neo4j.insert_documents(documents=documents)
 
-response = neo4j.execute_query("MATCH (n:Chunk) RETURN n.text as text, n.insightID as insightID LIMIT 5")
-
-print(len(response))
-print(response[0])
-print(response[0].keys())
+neo4j.get_insight_nodes()
 
