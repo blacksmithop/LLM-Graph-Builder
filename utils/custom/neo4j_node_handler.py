@@ -11,7 +11,9 @@ from langchain_community.graphs.graph_document import Node, Relationship, GraphD
 
 
 class Neo4J:
-    def __init__(self) -> None:
+    def __init__(self, document_name: str) -> None:
+        self.document_name = document_name
+
         self.graph = Neo4jGraph(
             url=getenv("NEO4J_URL"),
             database=getenv("NEO4J_DATABASE"),
@@ -20,98 +22,106 @@ class Neo4J:
             refresh_schema=False,
             sanitize=True,
         )
-        
+
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
-    
-    def insert_node(self, document: Document):
-        raise NotImplementedError
-    
-    def insert_graph_documents(self, documents: List[Document], allowed_nodes: List[str] = [], allowed_relationships: List[str] = []):
-        is_exist = self.check_if_nodes_exist()
-        logging.debug(f"Insights already uploaded: {is_exist}")
-        
-        if not is_exist:
-        # Insert Insight Documents
-            self.insert_documents(documents=documents)
-            logging.info("Finished Inserting Insight Documents")
-            
-            llm_transformer_filtered = LLMGraphTransformer(
-                llm=gpt3_llm,
-                allowed_nodes=allowed_nodes,
-                allowed_relationships=allowed_relationships,
-                strict_mode=False
-            )
-            graph_documents = llm_transformer_filtered.convert_to_graph_documents(documents)
-            self.graph.add_graph_documents(graph_documents)
-            logging.info("Finished Inserting Graph Documents")
 
-    def get_document_node(self, document_name: str):
-        document_node = Node(id=0, type="Document", properties={
-            "name": document_name
-        })
-        return document_node
-    
+           
 
-    
-    def insert_documents(self, documents: List[Document]):
-        is_exist = self.check_if_nodes_exist()
-        logging.error(f"Insights already uploaded: {is_exist}")
-        
-        if not is_exist:
-            logging.warning(f"Inserting documents...")
-            Neo4jVector.create_new_index
-            Neo4jVector.from_documents(
-                documents,
-                embeddings,
-                url=getenv("NEO4J_URL"),
-                username=getenv("NEO4J_USERNAME"),
-                password=getenv("NEO4J_PASSWORD"),
-                search_type="hybrid",
-                node_label="Insight",
-                database=getenv("NEO4J_DATABASE")
-            )
-            
-            self.set_node_label(new_label="Insight")
-            self.create_insight_index()
-            return logging.info(f"Finished inserting embedding data for {len(documents)} Nodes")
-    
-    def check_if_nodes_exist(self):
-        response = self.execute_query("MATCH (n:Chunk) RETURN COUNT(n) as count")
+    def get_insight_count(self):
+        response = self.execute_query("MATCH (n:Insight) RETURN COUNT(n) as count")
         count = response[0]["count"]
-        return count > 0
+        return count
 
-    def get_insight_nodes(self, count: int = None):
-        if count:
-            response = self.execute_query(f"MATCH (n:Insight) RETURN ID(n) as nodeID, n.text as Insight, n.insightID as InsightID LIMIT {count}")
-        else:
-            response = self.execute_query("MATCH (n:Insight) RETURN ID(n) as nodeID, n.text as Insight, n.insightID as InsightID")
+    def get_document_node(self):
+        document_node = Node(
+            id=0, type="Document", properties={"name": self.document_name}
+        )
+
+        return document_node
+
+    def get_insight_nodes(self, documents: List[Document]):
         nodes = [
-            Node(id=int(item["nodeID"]), type="Insight",
-                 properties={
-                     "insightID": item["InsightID"],
-                     "text": item["Insight"]
-                 } 
-                 ) for item in response
+            Node(id=doc.metadata["insightID"], type="Insight", properties={"insightID": doc.metadata["insightID"], "text": doc.page_content})
+            for doc in documents
         ]
-        
-        logging.info(f"Fetched {len(nodes)} Insight Nodes")
+
+        logging.info(f"Created {len(nodes)} Insight Nodes (no embeddings)")
         logging.info(nodes[0])
 
+        return nodes
+
+    def update_insight_text_embeddings(self, documents: List[Document]):
+        
+        data_for_query = [
+            {
+                "id": doc.metadata["insightID"],
+                "text": doc.page_content,
+                "embedding": embeddings.embed_query(doc.page_content)
+            }
+            for doc in documents
+        ]
+ 
+        QUERY = """
+        UNWIND $data AS row
+        MERGE (c:Insight {id: row.id})
+        SET c.embedding = row.embedding, c.text = row.text
+        """       
+        
+        self.graph.query(QUERY, params={"data":data_for_query})
+        
+
     def create_insight_index(self):
-        response = self.execute_query("""
+        response = self.execute_query(
+            """
         CREATE VECTOR INDEX `insight_vector` if not exists for (c:Insight) on (c.embedding)
         OPTIONS {indexConfig: {
         `vector.dimensions`: 1536,
-        `vector.similarity_function`: 'cosine'}}""")
-        
-        logging.info("Created Index for Insights")
-        logging.debug(response)
-        
+        `vector.similarity_function`: 'cosine'}}"""
+        )
+
     def set_node_label(self, new_label: str):
-        response = self.execute_query(f"""MATCH (n:Chunk)
+        response = self.execute_query(
+        f"""MATCH (n:Chunk)
         SET n:{new_label}
-        REMOVE n:Chunk""")
-        
+        REMOVE n:Chunk"""
+        )
+
         logging.info(f"Changed label to {new_label}")
         logging.debug(response)
+
+    def create_knowledge_graph(self, documents: List[Document]):
+        insight_count = self.get_insight_count()
+        
+        if insight_count == documents: # TODO: Allow for adding new nodes
+            logging.info(f"Insights ({insight_count}) already present in database")
+            
+            document_node = self.get_document_node()
+            document = Document(page_content=self.document_name)
+            logging.warning("Loaded Document Node")
+
+            insight_nodes = self.get_insight_nodes(documents=documents)
+            logging.warning(f"Loaded {len(insight_nodes)} Insight Nodes")
+
+            node_relationships = [
+                Relationship(
+                    source=insight_node, target=document_node, type="IS_INSIGHT_FROM"
+                )
+                for insight_node in insight_nodes
+            ]
+
+            logging.warning(f"Defined Insight, Document Relationship")
+
+            graph_document = GraphDocument(
+                nodes=[document_node]+insight_nodes, relationships=node_relationships, source=document
+            )
+            
+
+            self.graph.add_graph_documents([graph_document])
+            logging.warning(f"Added Insight, Document Relationship")
+
+            self.update_insight_text_embeddings(documents=documents)
+            logging.info(f"Added Embeddings, Text field for {len(documents)} Insights")
+
+            self.create_insight_index()
+            logging.info("Created Index for Insights")
