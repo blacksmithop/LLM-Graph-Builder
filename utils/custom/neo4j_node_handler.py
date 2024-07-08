@@ -26,8 +26,6 @@ class Neo4J:
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
 
-           
-
     def get_insight_count(self):
         response = self.execute_query("MATCH (n:Insight) RETURN COUNT(n) as count")
         count = response[0]["count"]
@@ -42,34 +40,20 @@ class Neo4J:
 
     def get_insight_nodes(self, documents: List[Document]):
         nodes = [
-            Node(id=doc.metadata["insightID"], type="Insight", properties={"insightID": doc.metadata["insightID"], "text": doc.page_content})
+            Node(
+                id=doc.metadata["insightID"],
+                type="Insight",
+                properties={
+                    "text": doc.page_content,
+                    "embedding": embeddings.embed_query(doc.page_content),
+                },
+            )
             for doc in documents
         ]
 
         logging.info(f"Created {len(nodes)} Insight Nodes (no embeddings)")
-        logging.info(nodes[0])
 
         return nodes
-
-    def update_insight_text_embeddings(self, documents: List[Document]):
-        
-        data_for_query = [
-            {
-                "id": doc.metadata["insightID"],
-                "text": doc.page_content,
-                "embedding": embeddings.embed_query(doc.page_content)
-            }
-            for doc in documents
-        ]
- 
-        QUERY = """
-        UNWIND $data AS row
-        MERGE (c:Insight {id: row.id})
-        SET c.embedding = row.embedding, c.text = row.text
-        """       
-        
-        self.graph.query(QUERY, params={"data":data_for_query})
-        
 
     def create_insight_index(self):
         response = self.execute_query(
@@ -82,7 +66,7 @@ class Neo4J:
 
     def set_node_label(self, new_label: str):
         response = self.execute_query(
-        f"""MATCH (n:Chunk)
+            f"""MATCH (n:Chunk)
         SET n:{new_label}
         REMOVE n:Chunk"""
         )
@@ -92,10 +76,11 @@ class Neo4J:
 
     def create_knowledge_graph(self, documents: List[Document]):
         insight_count = self.get_insight_count()
-        
-        if insight_count == documents: # TODO: Allow for adding new nodes
-            logging.info(f"Insights ({insight_count}) already present in database")
-            
+        logging.info(f"Insight Count: {insight_count}")
+
+        if insight_count < len(documents):  # TODO: Allow for adding new nodes
+            logging.info("Insights already present in database")
+
             document_node = self.get_document_node()
             document = Document(page_content=self.document_name)
             logging.warning("Loaded Document Node")
@@ -113,15 +98,13 @@ class Neo4J:
             logging.warning(f"Defined Insight, Document Relationship")
 
             graph_document = GraphDocument(
-                nodes=[document_node]+insight_nodes, relationships=node_relationships, source=document
+                nodes=[document_node] + insight_nodes,
+                relationships=node_relationships,
+                source=document,
             )
-            
 
             self.graph.add_graph_documents([graph_document])
             logging.warning(f"Added Insight, Document Relationship")
-
-            self.update_insight_text_embeddings(documents=documents)
-            logging.info(f"Added Embeddings, Text field for {len(documents)} Insights")
 
             self.create_insight_index()
             logging.info("Created Index for Insights")
