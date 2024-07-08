@@ -120,34 +120,37 @@ class Neo4J:
                 BATCH_SIZE += 1
                 
                 for item in insight_entity_relationship:
-                    head, head_type, tail ,tail_type, relation = item["head"], item["head_type"], item["tail"], item["tail_type"], item["relation"]
-                    
-                    head_node = Node(
-                            id=head,
-                            type=head_type,
-                    )
-                    tail_node = Node(
-                            id=tail,
-                            type=tail_type,
-                    )
-                    
-                    # HEAD - RELATION -> TAIL
-                    head_tail_relationship = Relationship(
-                        source=head_node, target=tail_node, type=relation
-                    )
-                    
-                    # INSIGHT - CONTAINS -> HEAD
-                    insight_head_relationship = Relationship(
-                        source=insight_node, target=head_node, type="CONTAINS_ENTITY"
-                    )
-                    
-                    graph_document = GraphDocument(
-                        nodes=[insight_node, head_node, tail_node],
-                        relationships=[head_tail_relationship, insight_head_relationship],
-                        source=source_document,
-                    )
+                    try:
+                        head, head_type, tail ,tail_type, relation = item["head"], item["head_type"], item["tail"], item["tail_type"], item["relation"]
+                        
+                        head_node = Node(
+                                id=head,
+                                type=head_type,
+                        )
+                        tail_node = Node(
+                                id=tail,
+                                type=tail_type,
+                        )
+                        
+                        # HEAD - RELATION -> TAIL
+                        head_tail_relationship = Relationship(
+                            source=head_node, target=tail_node, type=relation
+                        )
+                        
+                        # INSIGHT - CONTAINS -> HEAD
+                        insight_head_relationship = Relationship(
+                            source=insight_node, target=head_node, type="CONTAINS_ENTITY"
+                        )
+                        
+                        graph_document = GraphDocument(
+                            nodes=[insight_node, head_node, tail_node],
+                            relationships=[head_tail_relationship, insight_head_relationship],
+                            source=source_document,
+                        )
 
-                    self.graph.add_graph_documents([graph_document])
+                        self.graph.add_graph_documents([graph_document])
+                    except KeyError:
+                        pass
                     
             logging.warning(f"Added Insight, Entity Relationship to database")
                 
