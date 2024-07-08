@@ -6,6 +6,9 @@ from typing import List
 from utils.common.openi_core import embeddings
 from utils.custom.models import InsightNode
 import logging
+from langchain_experimental.graph_transformers import LLMGraphTransformer
+from utils.common.openi_core import gpt3_llm
+
 
 
 class Neo4J:
@@ -18,16 +21,32 @@ class Neo4J:
             refresh_schema=False,
             sanitize=True,
         )
-
+        
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
     
     def insert_node(self, document: Document):
         raise NotImplementedError
     
+    def insert_graph_documents(self, documents: List[Document], allowed_nodes: List[str] = [], allowed_relationships: List[str] = []):
+        is_exist = self.check_if_nodes_exist()
+        logging.info(f"Insights already uploaded: {is_exist}")
+        
+        if not is_exist:
+            llm_transformer_filtered = LLMGraphTransformer(
+                llm=gpt3_llm,
+                allowed_nodes=allowed_nodes,
+                allowed_relationships=allowed_relationships,
+                strict_mode=False
+            )
+            graph_documents = llm_transformer_filtered.convert_to_graph_documents(documents)
+            self.graph.add_graph_documents(graph_documents)
+            logging.info("Finished Inserting Graph Documents")
+
+    
     def insert_documents(self, documents: List[Document]):
         is_exist = self.check_if_nodes_exist()
-        logging.info(f"Documents already uploaded: {is_exist}")
+        logging.info(f"Insights already uploaded: {is_exist}")
         
         if not is_exist:
             logging.info(f"Inserting documents...")

@@ -16,6 +16,7 @@ LOG_IGNORELIST = [
     "httpcore",
     "openai",
     "neo4j",
+    "httpx"
 ]
 
 for item in LOG_IGNORELIST:
@@ -23,17 +24,18 @@ for item in LOG_IGNORELIST:
 
 neo4j = Neo4J()
 
-# file_handler = LocalFileHandler()
+file_handler = LocalFileHandler()
 
-# FILE_NAME = "Ipsen_Insight_Cluster.xlsx"
+FILE_NAME = "Ipsen_Insight_Cluster.xlsx"
 
-# FILE_PATH = f"./static/{FILE_NAME}"
+FILE_PATH = f"./static/{FILE_NAME}"
 
-# df = file_handler.read_local_file(FILE_PATH)
+df = file_handler.read_local_file(FILE_PATH)
 
-# documents = get_documents_from_df(df=df, insight_column="Insight", id_column="InsightID")
+documents = get_documents_from_df(df=df, insight_column="Insight", id_column="InsightID")[:5]
 
 # neo4j.insert_documents(documents=documents)
+neo4j.insert_graph_documents(documents=documents, allowed_relationships=["In combination with tiki", "recommended by oncologist", "Diagnosed with NSCLC", "Cabo administration", "Chemothreapy as treatmnet"])
 
-neo4j.get_insight_nodes()
+# neo4j.get_insight_nodes()
 

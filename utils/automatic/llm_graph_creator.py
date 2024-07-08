@@ -35,7 +35,6 @@ SLEEP_TIME = 30
 
 
 class LLMGraphTransformerWithLogging(LLMGraphTransformer):
-
     # def __init__(
     #     self,
     #     llm: BaseLanguageModel,
