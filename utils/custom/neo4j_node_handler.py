@@ -4,11 +4,10 @@ from langchain_community.vectorstores import Neo4jVector
 from langchain.docstore.document import Document
 from typing import List
 from utils.common.openi_core import embeddings
-from utils.custom.models import InsightNode
 import logging
 from langchain_experimental.graph_transformers import LLMGraphTransformer
 from utils.common.openi_core import gpt3_llm
-
+from langchain_community.graphs.graph_document import Node, Relationship, GraphDocument
 
 
 class Neo4J:
@@ -30,9 +29,13 @@ class Neo4J:
     
     def insert_graph_documents(self, documents: List[Document], allowed_nodes: List[str] = [], allowed_relationships: List[str] = []):
         is_exist = self.check_if_nodes_exist()
-        logging.info(f"Insights already uploaded: {is_exist}")
+        logging.debug(f"Insights already uploaded: {is_exist}")
         
         if not is_exist:
+        # Insert Insight Documents
+            self.insert_documents(documents=documents)
+            logging.info("Finished Inserting Insight Documents")
+            
             llm_transformer_filtered = LLMGraphTransformer(
                 llm=gpt3_llm,
                 allowed_nodes=allowed_nodes,
@@ -43,13 +46,20 @@ class Neo4J:
             self.graph.add_graph_documents(graph_documents)
             logging.info("Finished Inserting Graph Documents")
 
+    def get_document_node(self, document_name: str):
+        document_node = Node(id=0, type="Document", properties={
+            "name": document_name
+        })
+        return document_node
+    
+
     
     def insert_documents(self, documents: List[Document]):
         is_exist = self.check_if_nodes_exist()
-        logging.info(f"Insights already uploaded: {is_exist}")
+        logging.error(f"Insights already uploaded: {is_exist}")
         
         if not is_exist:
-            logging.info(f"Inserting documents...")
+            logging.warning(f"Inserting documents...")
             Neo4jVector.create_new_index
             Neo4jVector.from_documents(
                 documents,
@@ -61,6 +71,9 @@ class Neo4J:
                 node_label="Insight",
                 database=getenv("NEO4J_DATABASE")
             )
+            
+            self.set_node_label(new_label="Insight")
+            self.create_insight_index()
             return logging.info(f"Finished inserting embedding data for {len(documents)} Nodes")
     
     def check_if_nodes_exist(self):
@@ -68,14 +81,37 @@ class Neo4J:
         count = response[0]["count"]
         return count > 0
 
-    def get_insight_nodes(self, count: int = 10):
-        response = self.execute_query(f"MATCH (n:Chunk) RETURN n.text as Insight, n.insightID as InsightID LIMIT {count}")
-        
+    def get_insight_nodes(self, count: int = None):
+        if count:
+            response = self.execute_query(f"MATCH (n:Insight) RETURN ID(n) as nodeID, n.text as Insight, n.insightID as InsightID LIMIT {count}")
+        else:
+            response = self.execute_query("MATCH (n:Insight) RETURN ID(n) as nodeID, n.text as Insight, n.insightID as InsightID")
         nodes = [
-            InsightNode(text=item["Insight"], insightID=item["InsightID"]) for item in response
+            Node(id=int(item["nodeID"]), type="Insight",
+                 properties={
+                     "insightID": item["InsightID"],
+                     "text": item["Insight"]
+                 } 
+                 ) for item in response
         ]
         
         logging.info(f"Fetched {len(nodes)} Insight Nodes")
         logging.info(nodes[0])
 
- 
+    def create_insight_index(self):
+        response = self.execute_query("""
+        CREATE VECTOR INDEX `insight_vector` if not exists for (c:Insight) on (c.embedding)
+        OPTIONS {indexConfig: {
+        `vector.dimensions`: 1536,
+        `vector.similarity_function`: 'cosine'}}""")
+        
+        logging.info("Created Index for Insights")
+        logging.debug(response)
+        
+    def set_node_label(self, new_label: str):
+        response = self.execute_query(f"""MATCH (n:Chunk)
+        SET n:{new_label}
+        REMOVE n:Chunk""")
+        
+        logging.info(f"Changed label to {new_label}")
+        logging.debug(response)
