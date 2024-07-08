@@ -1,14 +1,15 @@
 from os import getenv
 from langchain_community.graphs import Neo4jGraph
-from langchain_community.vectorstores import Neo4jVector
 from langchain.docstore.document import Document
-from typing import List
+from typing import Dict, List
 from utils.common.openi_core import embeddings
 import logging
-from langchain_experimental.graph_transformers import LLMGraphTransformer
-from utils.common.openi_core import gpt3_llm
 from langchain_community.graphs.graph_document import Node, Relationship, GraphDocument
-
+from utils.custom.chains import get_graph_chain
+from tqdm import tqdm
+from langchain_community.vectorstores import Neo4jVector
+from langchain_experimental.graph_transformers import LLMGraphTransformer
+from time import sleep
 
 class Neo4J:
     def __init__(self, document_name: str) -> None:
@@ -22,6 +23,7 @@ class Neo4J:
             refresh_schema=False,
             sanitize=True,
         )
+        self.chain = get_graph_chain()
 
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
@@ -38,9 +40,11 @@ class Neo4J:
 
         return document_node
 
-    def get_insight_nodes(self, documents: List[Document]):
-        nodes = [
-            Node(
+    def get_insight_nodes(self, documents: List[Document]) -> List[Node]:
+        nodes = []
+        
+        for doc in tqdm(documents):
+            node = Node(
                 id=doc.metadata["insightID"],
                 type="Insight",
                 properties={
@@ -48,8 +52,7 @@ class Neo4J:
                     "embedding": embeddings.embed_query(doc.page_content),
                 },
             )
-            for doc in documents
-        ]
+            nodes.append(node)
 
         logging.info(f"Created {len(nodes)} Insight Nodes (no embeddings)")
 
@@ -76,35 +79,91 @@ class Neo4J:
 
     def create_knowledge_graph(self, documents: List[Document]):
         insight_count = self.get_insight_count()
-        logging.info(f"Insight Count: {insight_count}")
+        logging.info(f"Insights - {insight_count} Documents")
 
-        if insight_count < len(documents):  # TODO: Allow for adding new nodes
-            logging.info("Insights already present in database")
-
+        if insight_count+1 < len(documents):  # TODO: Allow for adding new nodes
             document_node = self.get_document_node()
-            document = Document(page_content=self.document_name)
-            logging.warning("Loaded Document Node")
+            source_document = Document(page_content=self.document_name)
 
-            insight_nodes = self.get_insight_nodes(documents=documents)
-            logging.warning(f"Loaded {len(insight_nodes)} Insight Nodes")
+            logging.debug("Generating Nodes with Embeddings")
+            insight_nodes: List[Node] = self.get_insight_nodes(documents=documents)
+            logging.warning(f"Completed for {len(insight_nodes)} Nodes")
 
-            node_relationships = [
+            insight_node_relationships = [
                 Relationship(
                     source=insight_node, target=document_node, type="IS_INSIGHT_FROM"
                 )
                 for insight_node in insight_nodes
             ]
-
-            logging.warning(f"Defined Insight, Document Relationship")
-
+            
             graph_document = GraphDocument(
                 nodes=[document_node] + insight_nodes,
-                relationships=node_relationships,
-                source=document,
+                relationships=insight_node_relationships,
+                source=source_document,
             )
-
             self.graph.add_graph_documents([graph_document])
-            logging.warning(f"Added Insight, Document Relationship")
+            logging.warning(f"Finished inserting Insight Nodes into database")
+            
+            logging.debug("Generating Entity, Relationships from Insight")
+            
+            BATCH_SIZE = 10
+            COUNT = 0
+            
+            for insight_node in tqdm(insight_nodes):
+                if COUNT == BATCH_SIZE:
+                    COUNT = 0
+                    logging.info("[SLEEPING FOR 10s 💤]")
+                    sleep(10)
+                    
+                insight = insight_node.properties["text"]
+                insight_entity_relationship = self.get_insight_entity_relationships(insight=insight)
+                BATCH_SIZE += 1
+                
+                for item in insight_entity_relationship:
+                    head, head_type, tail ,tail_type, relation = item["head"], item["head_type"], item["tail"], item["tail_type"], item["relation"]
+                    
+                    head_node = Node(
+                            id=head,
+                            type=head_type,
+                    )
+                    tail_node = Node(
+                            id=tail,
+                            type=tail_type,
+                    )
+                    
+                    # HEAD - RELATION -> TAIL
+                    head_tail_relationship = Relationship(
+                        source=head_node, target=tail_node, type=relation
+                    )
+                    
+                    # INSIGHT - CONTAINS -> HEAD
+                    insight_head_relationship = Relationship(
+                        source=insight_node, target=head_node, type="CONTAINS_ENTITY"
+                    )
+                    
+                    graph_document = GraphDocument(
+                        nodes=[insight_node, head_node, tail_node],
+                        relationships=[head_tail_relationship, insight_head_relationship],
+                        source=source_document,
+                    )
 
+                    self.graph.add_graph_documents([graph_document])
+                    
+            logging.warning(f"Added Insight, Entity Relationship to database")
+                
             self.create_insight_index()
-            logging.info("Created Index for Insights")
+            logging.info("Created Index (cosine) for Insights")
+        else:
+            logging.error("Insights already present in database")
+
+
+    def get_insight_entity_relationships(self, insight: str):
+        
+        entity_relationship = self.chain.invoke({
+            "input": insight
+        })
+        
+        return entity_relationship
+    
+        
+        

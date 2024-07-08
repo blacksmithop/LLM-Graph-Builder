@@ -35,3 +35,8 @@ documents = get_documents_from_df(df=df, insight_column="Insight", id_column="In
 neo4j = Neo4J(document_name=FILE_NAME)
 
 neo4j.create_knowledge_graph(documents=documents)
+
+
+entity_relationship = neo4j.get_insight_entity_relationships(insight=documents[0].page_content)
+logging.info(entity_relationship)
+
