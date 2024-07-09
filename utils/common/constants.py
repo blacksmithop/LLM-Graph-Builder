@@ -126,57 +126,8 @@ allowed_relations = [
     "Use of TKI monotherapy in specific patient populations.",
 ]
 
-allowed_nodes = ["Person", "Doctor", "HCP", "MSL", "Clinical Trial", "Drug", "Therapy", "Treatment", "Disease"]
+allowed_nodes = []
 
 
 examples = [
-    {
-        "text": (
-            "Adam is a software engineer in Microsoft since 2009, "
-            "and last year he got an award as the Best Talent"
-        ),
-        "head": "Adam",
-        "head_type": "Person",
-        "relation": "WORKS_FOR",
-        "tail": "Microsoft",
-        "tail_type": "Company",
-    },
-    {
-        "text": (
-            "Adam is a software engineer in Microsoft since 2009, "
-            "and last year he got an award as the Best Talent"
-        ),
-        "head": "Adam",
-        "head_type": "Person",
-        "relation": "HAS_AWARD",
-        "tail": "Best Talent",
-        "tail_type": "Award",
-    },
-    {
-        "text": (
-            "Microsoft is a tech company that provide "
-            "several products such as Microsoft Word"
-        ),
-        "head": "Microsoft Word",
-        "head_type": "Product",
-        "relation": "PRODUCED_BY",
-        "tail": "Microsoft",
-        "tail_type": "Company",
-    },
-    {
-        "text": "Microsoft Word is a lightweight app that accessible offline",
-        "head": "Microsoft Word",
-        "head_type": "Product",
-        "relation": "HAS_CHARACTERISTIC",
-        "tail": "lightweight app",
-        "tail_type": "Characteristic",
-    },
-    {
-        "text": "Microsoft Word is a lightweight app that accessible offline",
-        "head": "Microsoft Word",
-        "head_type": "Product",
-        "relation": "HAS_CHARACTERISTIC",
-        "tail": "accessible offline",
-        "tail_type": "Characteristic",
-    },
 ]
