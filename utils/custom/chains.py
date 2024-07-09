@@ -1,16 +1,21 @@
-from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
-from langchain_core.prompts import PromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
+from typing import List
+
 from langchain_core.messages import SystemMessage
-from utils.custom.models import UnstructuredRelation
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.prompts import (ChatPromptTemplate,
+                                    HumanMessagePromptTemplate, PromptTemplate)
+
 from utils.common.constants import examples
 from utils.common.openi_core import gpt3_llm, gpt4_llm
-from typing import List
+from utils.custom.models import UnstructuredRelation
 
 parser = JsonOutputParser(pydantic_object=UnstructuredRelation)
 
+
 def get_graph_creation_prompt(node_labels: List[str] = [], rel_types: List[str] = []):
-    
-    system_message = SystemMessage(content="""
+
+    system_message = SystemMessage(
+        content="""
     You are a top-tier algorithm designed for extracting information in
     structured formats to build a knowledge graph. Your task is to identify "
     the entities and relations requested with the user prompt from a given "
@@ -40,9 +45,9 @@ def get_graph_creation_prompt(node_labels: List[str] = [], rel_types: List[str] 
     crucial.",
 
     IMPORTANT NOTES:\n- Don't add any explanation and text.",
-    """)
-    
-    
+    """
+    )
+
     human_prompt = PromptTemplate(
         template="""Based on the following example, extract entities and 
     relations from the provided text.
@@ -68,7 +73,7 @@ def get_graph_creation_prompt(node_labels: List[str] = [], rel_types: List[str] 
             "examples": examples,
         },
     )
-    
+
     human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
 
     chat_prompt = ChatPromptTemplate.from_messages(
@@ -84,7 +89,7 @@ def get_graph_chain(node_labels: List[str] = [], rel_types: List[str] = []):
 
 
 follow_up_prompt = PromptTemplate.from_template(
-"""
+    """
 You are a helpful chatbot. You are tasked with answering questions over a graph database. Following are the queries for which data was fetched but a human could not give an answer. Analyze the query and context to give a suitable answer.
 Only give the final answer in a sentence form.
 
@@ -93,6 +98,7 @@ Context:
 
 Query: {query}
 Answer:
-""")
+"""
+)
 
 follow_up_chain = follow_up_prompt | gpt4_llm | StrOutputParser()

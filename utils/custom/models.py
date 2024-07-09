@@ -1,10 +1,11 @@
 from pydantic import BaseModel, Field
-from typing import Union, List
+
 
 class InsightNode(BaseModel):
     id: int
     text: str
     insightID: int
+
 
 class UnstructuredRelation(BaseModel):
     head: str = Field(

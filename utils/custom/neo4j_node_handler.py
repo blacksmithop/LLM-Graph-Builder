@@ -1,18 +1,26 @@
-from os import getenv
-from langchain_community.graphs import Neo4jGraph
-from langchain.docstore.document import Document
-from typing import Dict, List
-from utils.common.openi_core import embeddings
 import logging
-from langchain_community.graphs.graph_document import Node, Relationship, GraphDocument
-from utils.custom.chains import get_graph_chain
-from tqdm import tqdm
-from langchain.chains.graph_qa.cypher import GraphCypherQAChain
-from utils.common.openi_core import gpt3_llm
+from os import getenv
 from time import sleep
+from typing import List
+
+from langchain.chains.graph_qa.cypher import GraphCypherQAChain
+from langchain.docstore.document import Document
+from langchain_community.graphs import Neo4jGraph
+from langchain_community.graphs.graph_document import (GraphDocument, Node,
+                                                       Relationship)
+from tqdm import tqdm
+
+from utils.common.openi_core import embeddings, gpt3_llm, gpt4_llm
+from utils.custom.chains import get_graph_chain
+
 
 class Neo4J:
-    def __init__(self, document_name: str = "", node_labels: List[str] = [], rel_types: List[str] = []) -> None:
+    def __init__(
+        self,
+        document_name: str = "",
+        node_labels: List[str] = [],
+        rel_types: List[str] = [],
+    ) -> None:
         self.document_name = document_name
 
         self.graph = Neo4jGraph(
@@ -27,9 +35,9 @@ class Neo4J:
 
     def get_qa_chain(self):
         return GraphCypherQAChain.from_llm(
-            gpt3_llm, graph=self.graph, verbose=True, return_intermediate_steps=True
+            gpt4_llm, graph=self.graph, verbose=True, return_intermediate_steps=True
         )
-        
+
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
 
@@ -47,7 +55,7 @@ class Neo4J:
 
     def get_insight_nodes(self, documents: List[Document]) -> List[Node]:
         nodes = []
-        
+
         for doc in tqdm(documents):
             node = Node(
                 id=doc.metadata["insightID"],
@@ -86,7 +94,7 @@ class Neo4J:
         insight_count = self.get_insight_count()
         logging.info(f"Insights - {insight_count} Documents")
 
-        if insight_count+1 < len(documents):  # TODO: Allow for adding new nodes
+        if insight_count + 1 < len(documents):  # TODO: Allow for adding new nodes
             document_node = self.get_document_node()
             source_document = Document(page_content=self.document_name)
 
@@ -100,7 +108,7 @@ class Neo4J:
                 )
                 for insight_node in insight_nodes
             ]
-            
+
             graph_document = GraphDocument(
                 nodes=[document_node] + insight_nodes,
                 relationships=insight_node_relationships,
@@ -108,70 +116,77 @@ class Neo4J:
             )
             self.graph.add_graph_documents([graph_document])
             logging.warning(f"Finished inserting Insight Nodes into database")
-            
+
             logging.debug("Generating Entity, Relationships from Insight")
-            
+
             BATCH_SIZE = 10
             COUNT = 0
-            
+
             for insight_node in tqdm(insight_nodes):
                 if COUNT == BATCH_SIZE:
                     COUNT = 0
                     logging.info("[SLEEPING FOR 20s 💤]")
                     sleep(20)
-                    
+
                 insight = insight_node.properties["text"]
-                insight_entity_relationship = self.get_insight_entity_relationships(insight=insight)
+                insight_entity_relationship = self.get_insight_entity_relationships(
+                    insight=insight
+                )
                 BATCH_SIZE += 1
-                
+
                 for item in insight_entity_relationship:
                     try:
-                        head, head_type, tail ,tail_type, relation = item["head"], item["head_type"], item["tail"], item["tail_type"], item["relation"]
-                        
+                        head, head_type, tail, tail_type, relation = (
+                            item["head"],
+                            item["head_type"],
+                            item["tail"],
+                            item["tail_type"],
+                            item["relation"],
+                        )
+
                         head_node = Node(
-                                id=head,
-                                type=head_type,
+                            id=head,
+                            type=head_type,
                         )
                         tail_node = Node(
-                                id=tail,
-                                type=tail_type,
+                            id=tail,
+                            type=tail_type,
                         )
-                        
+
                         # HEAD - RELATION -> TAIL
                         head_tail_relationship = Relationship(
                             source=head_node, target=tail_node, type=relation
                         )
-                        
+
                         # INSIGHT - CONTAINS -> HEAD
                         insight_head_relationship = Relationship(
-                            source=insight_node, target=head_node, type="CONTAINS_ENTITY"
+                            source=insight_node,
+                            target=head_node,
+                            type="CONTAINS_ENTITY",
                         )
-                        
+
                         graph_document = GraphDocument(
                             nodes=[insight_node, head_node, tail_node],
-                            relationships=[head_tail_relationship, insight_head_relationship],
+                            relationships=[
+                                head_tail_relationship,
+                                insight_head_relationship,
+                            ],
                             source=source_document,
                         )
 
                         self.graph.add_graph_documents([graph_document])
                     except KeyError:
                         pass
-                    
+
             logging.warning(f"Added Insight, Entity Relationship to database")
-                
+
             self.create_insight_index()
             logging.info("Created Index (cosine) for Insights")
         else:
             logging.error("Insights already present in database")
 
-
     def get_insight_entity_relationships(self, insight: str):
-        
-        entity_relationship = self.chain.invoke({
-            "input": insight
-        })
-        
+
+        entity_relationship = self.chain.invoke({"input": insight})
+
         return entity_relationship
-    
-        
-        
