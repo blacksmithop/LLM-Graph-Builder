@@ -126,7 +126,7 @@ allowed_relations = [
     "Use of TKI monotherapy in specific patient populations.",
 ]
 
-allowed_nodes = []
+allowed_nodes = ["Person", "Doctor", "HCP", "MSL", "Clinical Trial", "Drug", "Therapy", "Treatment", "Disease"]
 
 
 examples = [

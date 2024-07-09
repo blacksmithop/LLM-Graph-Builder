@@ -8,10 +8,13 @@ from langchain.docstore.document import Document
 from langchain_community.graphs import Neo4jGraph
 from langchain_community.graphs.graph_document import (GraphDocument, Node,
                                                        Relationship)
+from utils.common.relationship_similarity import EmbeddingSimilarity
+
 from tqdm import tqdm
 
 from utils.common.openi_core import embeddings, gpt3_llm, gpt4_llm
 from utils.custom.chains import get_graph_chain
+
 
 
 class Neo4J:
@@ -32,6 +35,9 @@ class Neo4J:
             sanitize=True,
         )
         self.chain = get_graph_chain(node_labels=node_labels, rel_types=rel_types)
+        self.embeddings = embeddings
+        self.similarity = EmbeddingSimilarity(embeddings=self.embeddings)
+        
 
     def get_qa_chain(self):
         return GraphCypherQAChain.from_llm(
@@ -62,7 +68,7 @@ class Neo4J:
                 type="Insight",
                 properties={
                     "text": doc.page_content,
-                    "embedding": embeddings.embed_query(doc.page_content),
+                    "embedding": self.embeddings.embed_query(doc.page_content),
                 },
             )
             nodes.append(node)
@@ -144,10 +150,15 @@ class Neo4J:
                             item["relation"],
                         )
 
+                        head_type = self.similarity.get_similar_relationship(entity=head_type)                        
+                        
                         head_node = Node(
                             id=head,
                             type=head_type,
                         )
+                        
+                        tail_type = self.similarity.get_similar_relationship(entity=tail_type)
+                        
                         tail_node = Node(
                             id=tail,
                             type=tail_type,

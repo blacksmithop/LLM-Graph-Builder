@@ -3,7 +3,7 @@ import logging
 import coloredlogs
 from dotenv import load_dotenv
 
-from utils.common.constants import allowed_relations
+from utils.common.constants import allowed_relations, allowed_nodes
 from utils.common.create_document import get_documents_from_df
 from utils.common.file_handler import LocalFileHandler
 from utils.custom.neo4j_node_handler import Neo4J
@@ -30,7 +30,7 @@ documents = get_documents_from_df(
 )
 
 neo4j = Neo4J(
-    document_name=FILE_NAME, rel_types=allowed_relations[:30]
+    document_name=FILE_NAME, rel_types=allowed_relations[:30], node_labels=allowed_nodes
 )  # allowed_relations[20:40] []
 
 neo4j.create_knowledge_graph(documents=documents)
