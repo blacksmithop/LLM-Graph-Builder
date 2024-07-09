@@ -1,4 +1,4 @@
-from langchain_core.output_parsers import JsonOutputParser, PydanticOutputParser
+from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import PromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
 from langchain_core.messages import SystemMessage
 from utils.custom.models import UnstructuredRelation
@@ -81,3 +81,18 @@ def get_graph_chain(node_labels: List[str] = [], rel_types: List[str] = []):
     prompt = get_graph_creation_prompt(node_labels=node_labels, rel_types=rel_types)
     chain = prompt | gpt3_llm | JsonOutputParser()
     return chain
+
+
+follow_up_prompt = PromptTemplate.from_template(
+"""
+You are a helpful chatbot. You are tasked with answering questions over a graph database. Following are the queries for which data was fetched but a human could not give an answer. Analyze the query and context to give a suitable answer.
+Only give the final answer in a sentence form.
+
+Context:
+{context}
+
+Query: {query}
+Answer:
+""")
+
+follow_up_chain = follow_up_prompt | gpt4_llm | StrOutputParser()
