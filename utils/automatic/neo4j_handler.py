@@ -6,8 +6,8 @@ from typing import List
 from langchain.docstore.document import Document
 from langchain_community.graphs import Neo4jGraph
 
-from utils.llm_graph_creator import LLMGraphTransformerWithLogging
-from utils.openi_core import gpt3_llm, gpt4_llm
+from utils.automatic.llm_graph_creator import LLMGraphTransformerWithLogging
+from utils.common.openi_core import gpt3_llm, gpt4_llm
 
 CHUNKS_TO_COMBINE = 1  # TODO: Refactor to support 0 / remove argument
 
@@ -22,7 +22,9 @@ class Neo4J:
             refresh_schema=False,
             sanitize=True,
         )
-
+        
+        logging.info(f"Writing to [{getenv('NEO4J_DATABASE')}] Database")
+        
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
 
@@ -70,6 +72,7 @@ class Neo4J:
             allowed_relationships=allowed_relationship,
         )
         
+        llm_transformer.strict_mode = False
         
 
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -123,6 +126,7 @@ class Neo4J:
                 }
                 batch_data.append(query_data)
 
+        logging.warning(f"{len(batch_data)=}")
         if batch_data:
             unwind_query = """
                         UNWIND $batch_data AS data

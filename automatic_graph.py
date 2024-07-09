@@ -3,10 +3,10 @@ import logging
 import coloredlogs
 from dotenv import load_dotenv
 
-from utils.create_document import get_documents_from_df
-from utils.file_handler import LocalFileHandler
-from utils.node_creator import NodeCreator
-from utils.constants import allowed_relations, allowed_nodes
+from utils.common.create_document import get_documents_from_df
+from utils.common.file_handler import LocalFileHandler
+from utils.automatic.node_creator import NodeCreator
+from utils.common.constants import allowed_relations, allowed_nodes
 
 load_dotenv()
 coloredlogs.install(level="DEBUG")
@@ -29,13 +29,13 @@ FILE_PATH = f"./static/{FILE_NAME}"
 
 df = file_handler.read_local_file(FILE_PATH)
 
-documents = get_documents_from_df(df=df, insight_column="Insight", id_column="InsightID")[:50]
+documents = get_documents_from_df(df=df, insight_column="Insight", id_column="InsightID")[:100]
 
 
 node = NodeCreator()
 
 node.allowed_nodes = allowed_nodes
-node.allowed_relationships = [] #allowed_relations[:10]
+node.allowed_relationships = allowed_relations[:20]
 
 logging.info(f"Passing {len(node.allowed_nodes)} nodes and {len(node.allowed_relationships)} relationships as Examples")
 logging.debug(f"Relationships: {node.allowed_relationships}")

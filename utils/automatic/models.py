@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-
+# Automatic
 class SourceNode(BaseModel):
     file_name: Optional[str] = None
     file_size: Optional[int] = None
@@ -28,3 +28,5 @@ class SourceNode(BaseModel):
     is_cancelled: bool = None
     processed_chunk: Optional[int] = None
     access_token: Optional[str] = None
+
+# Custom

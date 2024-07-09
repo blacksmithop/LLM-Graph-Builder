@@ -6,9 +6,9 @@ from typing import List
 
 from langchain.docstore.document import Document
 
-from utils.models import SourceNode
-from utils.neo4j_handler import Neo4J
-from utils.openi_core import embeddings
+from utils.automatic.models import SourceNode
+from utils.automatic.neo4j_handler import Neo4J
+from utils.common.openi_core import embeddings
 
 UPDATE_GRAPH_CHUNKS_PROCESSED = 20
 

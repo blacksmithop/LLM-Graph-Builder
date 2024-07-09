@@ -33,7 +33,7 @@ class LocalFileHandler:
             case _:
                 raise ValueError("Please pass a valid file type")
 
-        logging.debug(f"Received file of type {FILE_MAP[extension]}")
+        logging.debug(f"Received file of type: {FILE_MAP[extension]}")
 
         # logging.debug(df.head())
 
