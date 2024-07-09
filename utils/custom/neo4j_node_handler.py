@@ -16,6 +16,7 @@ from utils.common.openi_core import embeddings, gpt3_llm, gpt4_llm
 from utils.custom.chains import get_graph_chain
 
 
+RELATION_BLACKLIST = ["Document"]
 
 class Neo4J:
     def __init__(
@@ -150,14 +151,20 @@ class Neo4J:
                             item["relation"],
                         )
 
-                        head_type = self.similarity.get_similar_relationship(entity=head_type)                        
+                        try:
+                            similar_relation = self.similarity.get_similar_relationship(entity=relation)
+                            relation = similar_relation
+                            
+                            if relation in RELATION_BLACKLIST:
+                                continue
+                        except Exception:
+                            pass
                         
                         head_node = Node(
                             id=head,
                             type=head_type,
                         )
                         
-                        tail_type = self.similarity.get_similar_relationship(entity=tail_type)
                         
                         tail_node = Node(
                             id=tail,
@@ -186,8 +193,8 @@ class Neo4J:
                         )
 
                         self.graph.add_graph_documents([graph_document])
-                    except KeyError:
-                        pass
+                    except Exception as e:
+                        logging.error(e)
 
             logging.warning(f"Added Insight, Entity Relationship to database")
 
