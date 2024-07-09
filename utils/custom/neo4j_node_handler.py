@@ -7,12 +7,12 @@ import logging
 from langchain_community.graphs.graph_document import Node, Relationship, GraphDocument
 from utils.custom.chains import get_graph_chain
 from tqdm import tqdm
-from langchain_community.vectorstores import Neo4jVector
-from langchain_experimental.graph_transformers import LLMGraphTransformer
+from langchain.chains.graph_qa.cypher import GraphCypherQAChain
+from utils.common.openi_core import gpt3_llm
 from time import sleep
 
 class Neo4J:
-    def __init__(self, document_name: str) -> None:
+    def __init__(self, document_name: str = "", node_labels: List[str] = [], rel_types: List[str] = []) -> None:
         self.document_name = document_name
 
         self.graph = Neo4jGraph(
@@ -23,8 +23,13 @@ class Neo4J:
             refresh_schema=False,
             sanitize=True,
         )
-        self.chain = get_graph_chain()
+        self.chain = get_graph_chain(node_labels=node_labels, rel_types=rel_types)
 
+    def get_qa_chain(self):
+        return GraphCypherQAChain.from_llm(
+            gpt3_llm, graph=self.graph, verbose=True, return_intermediate_steps=True
+        )
+        
     def execute_query(self, query, param=None):
         return self.graph.query(query, param)
 
@@ -54,7 +59,7 @@ class Neo4J:
             )
             nodes.append(node)
 
-        logging.info(f"Created {len(nodes)} Insight Nodes (no embeddings)")
+        logging.info(f"Created {len(nodes)} Insight Nodes")
 
         return nodes
 
@@ -112,8 +117,8 @@ class Neo4J:
             for insight_node in tqdm(insight_nodes):
                 if COUNT == BATCH_SIZE:
                     COUNT = 0
-                    logging.info("[SLEEPING FOR 10s 💤]")
-                    sleep(10)
+                    logging.info("[SLEEPING FOR 20s 💤]")
+                    sleep(20)
                     
                 insight = insight_node.properties["text"]
                 insight_entity_relationship = self.get_insight_entity_relationships(insight=insight)
