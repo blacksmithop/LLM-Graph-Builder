@@ -12,7 +12,7 @@ class EmbeddingSimilarity:
     def __init__(self, embeddings: AzureOpenAIEmbeddings) -> None:
         self.emb_cache = {}
         self.similar_entities = {}
-        self.embbeddings = embeddings
+        self.embeddings = embeddings
         
     def get_similar_relationship(self, entity: str):
         matching_key = next((key for key, value_list in self.similar_entities.items() if entity in value_list), None)
