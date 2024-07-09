@@ -3,7 +3,7 @@ from langchain_core.prompts import PromptTemplate, HumanMessagePromptTemplate, C
 from langchain_core.messages import SystemMessage
 from utils.custom.models import UnstructuredRelation
 from utils.common.constants import examples
-from utils.common.openi_core import gpt3_llm
+from utils.common.openi_core import gpt3_llm, gpt4_llm
 from typing import List
 
 parser = JsonOutputParser(pydantic_object=UnstructuredRelation)
