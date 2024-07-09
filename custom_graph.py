@@ -19,7 +19,7 @@ for item in LOG_IGNORELIST:
 
 file_handler = LocalFileHandler()
 
-FILE_NAME = "Ipsen_Insight_Cluster.xlsx"
+FILE_NAME = "dataset.xlsx"
 
 FILE_PATH = f"./static/{FILE_NAME}"
 
