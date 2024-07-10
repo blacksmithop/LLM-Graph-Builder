@@ -16,6 +16,7 @@ class EmbeddingSimilarity:
         self.embeddings = embeddings
 
     def get_similar_relationship(self, entity: str):
+        entity = entity.title()
         matching_key = next(
             (
                 key
