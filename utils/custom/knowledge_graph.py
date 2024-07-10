@@ -198,12 +198,10 @@ class Neo4JKnowledgeGraph:
                             type=tail_type,
                         )
 
-                        # HEAD - RELATION -> TAIL
                         head_tail_relationship = Relationship(
                             source=head_node, target=tail_node, type=relation
                         )
 
-                        # INSIGHT - CONTAINS -> HEAD
                         insight_head_relationship = Relationship(
                             source=insight_node,
                             target=head_node,

@@ -22,7 +22,7 @@ class LocalFileHandler:
                 f"Created static folder at {os.path.join(os.getcwd(), FILE_DIR)}"
             )
         else:
-            logging.info(f"Found {FILE_DIR} folder")
+            logging.info(f"Static folder found at {FILE_DIR}")
 
     def read_local_file(self, file_path: str):
         match extension := get_file_extension(file_path):
@@ -33,8 +33,5 @@ class LocalFileHandler:
             case _:
                 raise ValueError("Please pass a valid file type")
 
-        logging.debug(f"Received file of type: {FILE_MAP[extension]}")
-
-        # logging.debug(df.head())
-
+        logging.debug(f"Read file {file_path} of type {FILE_MAP[extension]}")
         return df

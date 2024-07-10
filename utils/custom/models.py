@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
 from typing import List
+
+from pydantic import BaseModel, Field
 
 
 class InsightNode(BaseModel):
@@ -28,6 +29,7 @@ class UnstructuredRelation(BaseModel):
     tail_type: str = Field(
         description="type of the extracted tail entity like Person, Company, etc"
     )
+
 
 class UnstructuredRelationNodes(BaseModel):
     nodes: List[UnstructuredRelation] = Field(

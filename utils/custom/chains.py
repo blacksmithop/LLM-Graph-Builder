@@ -11,7 +11,9 @@ from utils.custom.models import UnstructuredRelation
 parser = JsonOutputParser(pydantic_object=UnstructuredRelation)
 
 
-def get_graph_creation_prompt(node_labels: List[str] = [], rel_types: List[str] = [], examples: List[Dict] = []):
+def get_graph_creation_prompt(
+    node_labels: List[str] = [], rel_types: List[str] = [], examples: List[Dict] = []
+):
 
     system_message = SystemMessage(
         content="""
@@ -81,8 +83,12 @@ def get_graph_creation_prompt(node_labels: List[str] = [], rel_types: List[str] 
     return chat_prompt
 
 
-def get_graph_chain(node_labels: List[str] = [], rel_types: List[str] = [], examples: List[Dict]=[]):
-    prompt = get_graph_creation_prompt(node_labels=node_labels, rel_types=rel_types, examples=examples)
+def get_graph_chain(
+    node_labels: List[str] = [], rel_types: List[str] = [], examples: List[Dict] = []
+):
+    prompt = get_graph_creation_prompt(
+        node_labels=node_labels, rel_types=rel_types, examples=examples
+    )
     chain = prompt | gpt3_llm | JsonOutputParser()
     return chain
 
