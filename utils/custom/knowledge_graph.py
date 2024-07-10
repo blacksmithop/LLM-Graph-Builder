@@ -3,27 +3,29 @@ from os import getenv
 from time import sleep
 from typing import List
 
-from langchain.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain.docstore.document import Document
+from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain_community.graphs import Neo4jGraph
 from langchain_community.graphs.graph_document import (GraphDocument, Node,
                                                        Relationship)
-from utils.common.relationship_similarity import EmbeddingSimilarity
-
 from tqdm import tqdm
 
 from utils.common.openi_core import embeddings, gpt3_llm, gpt4_llm
+from utils.common.relationship_similarity import EmbeddingSimilarity
 from utils.custom.chains import get_graph_chain
-
+from utils.custom.graph_agent import get_graph_chain_v2
 
 RELATION_BLACKLIST = ["Document"]
 
-class Neo4J:
+
+class Neo4JKnowledgeGraph:
     def __init__(
         self,
         document_name: str = "",
         node_labels: List[str] = [],
         rel_types: List[str] = [],
+        examples: List[str] = [],
+        use_v2_chain: bool = True,
     ) -> None:
         self.document_name = document_name
 
@@ -35,10 +37,19 @@ class Neo4J:
             refresh_schema=False,
             sanitize=True,
         )
+        self.use_v2_chain = use_v2_chain
+        logging.info(
+            f"Node labels - {node_labels}\nRelationship types - {rel_types[:10]}...\nExample nodes - {examples[:3]}..."
+        )
+        logging.debug(f"Use V2 Chain (generates more nodes) - {['No', 'Yes'][use_v2_chain]}")
+
         self.chain = get_graph_chain(node_labels=node_labels, rel_types=rel_types)
+        self.graph_chain = get_graph_chain_v2(
+            node_labels=node_labels, rel_types=rel_types, examples=examples
+        )
+
         self.embeddings = embeddings
         self.similarity = EmbeddingSimilarity(embeddings=self.embeddings)
-        
 
     def get_qa_chain(self):
         return GraphCypherQAChain.from_llm(
@@ -57,7 +68,6 @@ class Neo4J:
         document_node = Node(
             id=0, type="Document", properties={"name": self.document_name}
         )
-
         return document_node
 
     def get_insight_nodes(self, documents: List[Document]) -> List[Node]:
@@ -79,7 +89,7 @@ class Neo4J:
         return nodes
 
     def create_insight_index(self):
-        response = self.execute_query(
+        self.execute_query(
             """
         CREATE VECTOR INDEX `insight_vector` if not exists for (c:Insight) on (c.embedding)
         OPTIONS {indexConfig: {
@@ -105,9 +115,12 @@ class Neo4J:
             document_node = self.get_document_node()
             source_document = Document(page_content=self.document_name)
 
-            logging.debug("Generating Nodes with Embeddings")
+            logging.debug("Getting Insight Node Embeddings")
             insight_nodes: List[Node] = self.get_insight_nodes(documents=documents)
             logging.warning(f"Completed for {len(insight_nodes)} Nodes")
+
+            # TODO: Support Nested Nodes
+            # Insight -> Head_Node_1 -RELATION-> Tail_Node_1 -RELATION-> SubHead_Node_2 -RELATION-> SubTail_Node_2
 
             insight_node_relationships = [
                 Relationship(
@@ -141,6 +154,9 @@ class Neo4J:
                 )
                 BATCH_SIZE += 1
 
+                if self.use_v2_chain:
+                    insight_entity_relationship = insight_entity_relationship["nodes"]
+
                 for item in insight_entity_relationship:
                     try:
                         head, head_type, tail, tail_type, relation = (
@@ -151,32 +167,41 @@ class Neo4J:
                             item["relation"],
                         )
 
+                        # Check similarity HEAD, TAIL, RELATION
+                        head = self.similarity.get_similar_relationship(entity=head)
+                        tail = self.similarity.get_similar_relationship(entity=tail)
+
+                        if head == tail:
+                            logging.warning(
+                                f"Ignoring circular relation [{head}]] --{relation}-- [{tail}] Skipping"
+                            )
+                            continue
+
                         try:
-                            similar_relation = self.similarity.get_similar_relationship(entity=relation)
+                            similar_relation = self.similarity.get_similar_relationship(
+                                entity=relation
+                            )
                             relation = similar_relation
-                            
+
                             if relation in RELATION_BLACKLIST:
                                 continue
                         except Exception:
                             pass
-                        
+
                         head_node = Node(
                             id=head,
                             type=head_type,
                         )
-                        
-                        
+
                         tail_node = Node(
                             id=tail,
                             type=tail_type,
                         )
 
-                        # HEAD - RELATION -> TAIL
                         head_tail_relationship = Relationship(
                             source=head_node, target=tail_node, type=relation
                         )
 
-                        # INSIGHT - CONTAINS -> HEAD
                         insight_head_relationship = Relationship(
                             source=insight_node,
                             target=head_node,
@@ -204,7 +229,8 @@ class Neo4J:
             logging.error("Insights already present in database")
 
     def get_insight_entity_relationships(self, insight: str):
-
-        entity_relationship = self.chain.invoke({"input": insight})
-
+        if self.use_v2_chain:
+            entity_relationship = self.graph_chain.invoke({"input": insight})
+        else:
+            entity_relationship = self.chain.invoke({"input": insight})
         return entity_relationship

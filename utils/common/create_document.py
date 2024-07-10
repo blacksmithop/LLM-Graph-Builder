@@ -1,3 +1,5 @@
+import logging
+
 from langchain.docstore.document import Document
 from pandas import DataFrame
 
@@ -15,4 +17,6 @@ def get_documents_from_df(
         Document(page_content=insight, metadata={"insightID": insightID})
         for insight, insightID in zip(df[insight_column], df[id_column])
     ]
+
+    logging.info(f"Converted file to Documents ({len(documents)})")
     return documents

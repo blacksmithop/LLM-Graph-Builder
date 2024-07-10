@@ -29,13 +29,12 @@ jsonpatch==1.33
 jsonpointer==3.0.0
 jsonschema==4.23.0
 jsonschema-specifications==2023.12.1
-langchain==0.2.6
-langchain-community==0.2.6
-langchain-core==0.2.11
+langchain==0.2.7
+langchain-community==0.2.7
+langchain-core==0.2.12
 langchain-experimental==0.0.62
 langchain-openai==0.1.14
 langchain-text-splitters==0.2.2
-langfuse==2.38.0
 langsmith==0.1.84
 markdown-it-py==3.0.0
 MarkupSafe==2.1.5

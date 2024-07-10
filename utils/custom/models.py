@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel, Field
 
 
@@ -26,4 +28,12 @@ class UnstructuredRelation(BaseModel):
     )
     tail_type: str = Field(
         description="type of the extracted tail entity like Person, Company, etc"
+    )
+
+
+class UnstructuredRelationNodes(BaseModel):
+    nodes: List[UnstructuredRelation] = Field(
+        description=(
+            "A list of UnstructuredRelation nodes. Only include valid nodes, avoid duplicates"
+        )
     )
