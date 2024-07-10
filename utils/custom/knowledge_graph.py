@@ -154,9 +154,6 @@ class Neo4JKnowledgeGraph:
                 )
                 BATCH_SIZE += 1
 
-                if self.use_v2_chain:
-                    insight_entity_relationship = insight_entity_relationship["nodes"]
-
                 for item in insight_entity_relationship:
                     try:
                         head, head_type, tail, tail_type, relation = (
@@ -230,7 +227,11 @@ class Neo4JKnowledgeGraph:
 
     def get_insight_entity_relationships(self, insight: str):
         if self.use_v2_chain:
-            entity_relationship = self.graph_chain.invoke({"input": insight})
+            try:
+                entity_relationship = self.graph_chain.invoke({"input": insight})["nodes"]
+            except Exception as e:
+                logging.info("Got invalid JSON in v2 using default chain")
+                entity_relationship = self.chain.invoke({"input": insight})
         else:
             entity_relationship = self.chain.invoke({"input": insight})
         return entity_relationship
