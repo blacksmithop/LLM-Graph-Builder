@@ -1,18 +1,17 @@
-from typing import List
+from typing import Dict, List
 
 from langchain_core.messages import SystemMessage
 from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import (ChatPromptTemplate,
                                     HumanMessagePromptTemplate, PromptTemplate)
 
-from utils.common.constants import examples
 from utils.common.openi_core import gpt3_llm, gpt4_llm
 from utils.custom.models import UnstructuredRelation
 
 parser = JsonOutputParser(pydantic_object=UnstructuredRelation)
 
 
-def get_graph_creation_prompt(node_labels: List[str] = [], rel_types: List[str] = []):
+def get_graph_creation_prompt(node_labels: List[str] = [], rel_types: List[str] = [], examples: List[Dict] = []):
 
     system_message = SystemMessage(
         content="""
@@ -82,8 +81,8 @@ def get_graph_creation_prompt(node_labels: List[str] = [], rel_types: List[str] 
     return chat_prompt
 
 
-def get_graph_chain(node_labels: List[str] = [], rel_types: List[str] = []):
-    prompt = get_graph_creation_prompt(node_labels=node_labels, rel_types=rel_types)
+def get_graph_chain(node_labels: List[str] = [], rel_types: List[str] = [], examples: List[Dict]=[]):
+    prompt = get_graph_creation_prompt(node_labels=node_labels, rel_types=rel_types, examples=examples)
     chain = prompt | gpt3_llm | JsonOutputParser()
     return chain
 
