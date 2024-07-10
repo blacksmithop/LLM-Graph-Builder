@@ -159,9 +159,14 @@ class Neo4JKnowledgeGraph:
                             item["tail_type"],
                             item["relation"],
                         )
+                        
                         # Check similarity HEAD, TAIL, RELATION
                         head = self.similarity.get_similar_relationship(entity=head)
                         tail = self.similarity.get_similar_relationship(entity=tail)
+                        
+                        if head == tail:
+                            logging.info(f"Found circular relation {head} --{relation}-> {tail} Skipping")
+                            continue
                         
                         try:
                             similar_relation = self.similarity.get_similar_relationship(entity=relation)
