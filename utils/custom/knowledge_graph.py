@@ -3,7 +3,7 @@ from os import getenv
 from time import sleep
 from typing import List
 
-from langchain.chains.graph_qa.cypher import GraphCypherQAChain
+from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
 from langchain.docstore.document import Document
 from langchain_community.graphs import Neo4jGraph
 from langchain_community.graphs.graph_document import (GraphDocument, Node,

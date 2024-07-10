@@ -3,7 +3,7 @@ import streamlit as st
 from utils.custom.chains import follow_up_chain
 from utils.custom.knowledge_graph import Neo4JKnowledgeGraph
 
-neo4j = Neo4J(document_name="")
+neo4j = Neo4JKnowledgeGraph(document_name="")
 chain = neo4j.get_qa_chain()
 
 if "messages" not in st.session_state:
