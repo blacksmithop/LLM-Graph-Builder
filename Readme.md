@@ -10,6 +10,10 @@ flowchart TD
     E --> F[Create Vector Index]
 ```
 
+The Builder supports two modes of operation when creating the nodes. This can be toggled by setting `use_v2_chain` in [Neo4JKnowledgeGraph](/uti
+ls/custom/knowledge_graph.py#L40). When set to `False` less number of nodes will be created. It defaults to `True`. This might be useful in some cases. 
+
+
 ## Question Answering
 ```mermaid
 graph TD
