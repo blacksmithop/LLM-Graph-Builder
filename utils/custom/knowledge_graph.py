@@ -41,7 +41,7 @@ class Neo4JKnowledgeGraph:
         logging.info(
             f"Node labels - {node_labels}\nRelationship types - {rel_types[:10]}...\nExample nodes - {examples[:3]}..."
         )
-        logging.debug(f"Use V2 Chain (more nodes) - {['No', 'Yes'][use_v2_chain]}")
+        logging.debug(f"Use V2 Chain (generates more nodes) - {['No', 'Yes'][use_v2_chain]}")
 
         self.chain = get_graph_chain(node_labels=node_labels, rel_types=rel_types)
         self.graph_chain = get_graph_chain_v2(
@@ -115,7 +115,7 @@ class Neo4JKnowledgeGraph:
             document_node = self.get_document_node()
             source_document = Document(page_content=self.document_name)
 
-            logging.debug("Generating Nodes with Embeddings")
+            logging.debug("Getting Insight Node Embeddings")
             insight_nodes: List[Node] = self.get_insight_nodes(documents=documents)
             logging.warning(f"Completed for {len(insight_nodes)} Nodes")
 
@@ -172,8 +172,8 @@ class Neo4JKnowledgeGraph:
                         tail = self.similarity.get_similar_relationship(entity=tail)
 
                         if head == tail:
-                            logging.info(
-                                f"Found circular relation {head} --{relation}-> {tail} Skipping"
+                            logging.warning(
+                                f"Ignoring circular relation [{head}]] --{relation}-- [{tail}] Skipping"
                             )
                             continue
 
