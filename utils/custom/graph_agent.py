@@ -15,9 +15,6 @@ parser = JsonOutputParser(pydantic_object=UnstructuredRelationNodes)
 # constants
 from utils.common.constants import allowed_nodes, allowed_relations, examples
 
-llm.max_tokens = 1000
-llm.temperature = 0.4
-
 
 def get_graph_chain_v2(
     node_labels: List[str] = allowed_nodes,
