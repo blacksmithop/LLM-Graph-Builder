@@ -4,7 +4,7 @@ from langchain.prompts import PromptTemplate
 from langchain_core.messages import SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
 
-from utils.common.openi_core import gpt3_llm
+from utils.common.llm_core import llm
 from utils.custom.models import UnstructuredRelationNodes
 from utils.custom.prompts import (BASE_PROMPT, EXAMPLE_PROMPT,
                                   HEAD_TAIL_PROMPT, INSTRUCTION_PROMPT,
@@ -15,8 +15,8 @@ parser = JsonOutputParser(pydantic_object=UnstructuredRelationNodes)
 # constants
 from utils.common.constants import allowed_nodes, allowed_relations, examples
 
-gpt3_llm.max_tokens = 1000
-gpt3_llm.temperature = 0.4
+llm.max_tokens = 1000
+llm.temperature = 0.4
 
 
 def get_graph_chain_v2(
@@ -39,7 +39,7 @@ def get_graph_chain_v2(
     )
     generate_graph_chain = (
         human_prompt
-        | gpt3_llm
+        | llm
         | JsonOutputParser(pydantic_object=UnstructuredRelationNodes)
     )
 

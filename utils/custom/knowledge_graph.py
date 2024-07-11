@@ -10,7 +10,7 @@ from langchain_community.graphs.graph_document import (GraphDocument, Node,
                                                        Relationship)
 from tqdm import tqdm
 
-from utils.common.openi_core import embeddings, gpt3_llm, gpt4_llm
+from utils.common.llm_core import embeddings, llm
 from utils.common.relationship_similarity import EmbeddingSimilarity
 from utils.custom.chains import get_graph_chain
 from utils.custom.graph_agent import get_graph_chain_v2
@@ -53,7 +53,7 @@ class Neo4JKnowledgeGraph:
 
     def get_qa_chain(self):
         return GraphCypherQAChain.from_llm(
-            gpt4_llm, graph=self.graph, verbose=True, return_intermediate_steps=True
+            llm, graph=self.graph, verbose=True, return_intermediate_steps=True
         )
 
     def execute_query(self, query, param=None):
