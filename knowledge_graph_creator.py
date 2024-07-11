@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from utils.common.constants import allowed_nodes, allowed_relations
 from utils.common.create_document import get_documents_from_df
 from utils.common.file_handler import LocalFileHandler
-from utils.custom.neo4j_node_handler import Neo4J
+from utils.custom.knowledge_graph import Neo4JKnowledgeGraph
 
 load_dotenv()
 coloredlogs.install(level="DEBUG")
