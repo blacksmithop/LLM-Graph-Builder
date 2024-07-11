@@ -30,7 +30,7 @@ documents = get_documents_from_df(
     df=df, insight_column="Insight", id_column="InsightID"
 )
 
-neo4j = Neo4J(
+neo4j = Neo4JKnowledgeGraph(
     document_name=FILE_NAME, rel_types=allowed_relations[:30], node_labels=allowed_nodes
 )  # allowed_relations[20:40] []
 
