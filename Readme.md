@@ -1,5 +1,7 @@
 # Knowledge Graph Builder
 
+![Python](https://skillicons.dev/icons?i=python,docker)
+
 ## Graph Creation
 ```mermaid
 flowchart TD
@@ -11,6 +13,7 @@ flowchart TD
 ```
 
 ### Installation
+
 
 First, install the dependenices
 ```bash
