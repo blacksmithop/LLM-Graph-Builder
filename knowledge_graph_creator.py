@@ -12,7 +12,7 @@ from utils.custom.knowledge_graph import Neo4JKnowledgeGraph
 load_dotenv()
 coloredlogs.install(level="DEBUG")
 
-LOG_IGNORELIST = ["httpcore", "openai", "neo4j", "httpx"]
+LOG_IGNORELIST = ["httpcore", "openai", "neo4j", "httpx", "urllib3"]
 
 for item in LOG_IGNORELIST:
     logging.getLogger(item).setLevel(logging.WARNING)
@@ -32,7 +32,7 @@ documents = get_documents_from_df(
 
 neo4j = Neo4JKnowledgeGraph(
     document_name=FILE_NAME, rel_types=allowed_relations[:30], node_labels=allowed_nodes
-)  # allowed_relations[20:40] []
+)
 
 neo4j.create_knowledge_graph(documents=documents)
 
