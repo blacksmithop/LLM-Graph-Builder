@@ -41,7 +41,9 @@ class Neo4JKnowledgeGraph:
         logging.info(
             f"Node labels - {node_labels}\nRelationship types - {rel_types[:10]}...\nExample nodes - {examples[:3]}..."
         )
-        logging.debug(f"Use V2 Chain (generates more nodes) - {['No', 'Yes'][use_v2_chain]}")
+        logging.debug(
+            f"Use V2 Chain (generates more nodes) - {['No', 'Yes'][use_v2_chain]}"
+        )
 
         self.chain = get_graph_chain(node_labels=node_labels, rel_types=rel_types)
         self.graph_chain = get_graph_chain_v2(
@@ -228,7 +230,9 @@ class Neo4JKnowledgeGraph:
     def get_insight_entity_relationships(self, insight: str):
         if self.use_v2_chain:
             try:
-                entity_relationship = self.graph_chain.invoke({"input": insight})["nodes"]
+                entity_relationship = self.graph_chain.invoke({"input": insight})[
+                    "nodes"
+                ]
             except Exception as e:
                 logging.info("Got invalid JSON in v2 using default chain")
                 entity_relationship = self.chain.invoke({"input": insight})

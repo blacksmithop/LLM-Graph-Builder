@@ -38,9 +38,7 @@ def get_graph_chain_v2(
         },
     )
     generate_graph_chain = (
-        human_prompt
-        | llm
-        | JsonOutputParser(pydantic_object=UnstructuredRelationNodes)
+        human_prompt | llm | JsonOutputParser(pydantic_object=UnstructuredRelationNodes)
     )
 
     return generate_graph_chain
