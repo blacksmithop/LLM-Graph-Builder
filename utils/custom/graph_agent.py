@@ -1,7 +1,6 @@
 from typing import Dict, List
 
 from langchain.prompts import PromptTemplate
-from langchain_core.messages import SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
 
 from utils.common.llm_core import llm
@@ -21,11 +20,8 @@ def get_graph_chain_v2(
     rel_types: List[str] = allowed_relations[30:60],
     examples: List[Dict] = examples,
 ):
-    system_message = SystemMessage(
-        content=f"{BASE_PROMPT}\n{HEAD_TAIL_PROMPT}\n{INSTRUCTION_PROMPT}"
-    )
     human_prompt = PromptTemplate(
-        template=f"{NODE_RELATION_EXAMPLE_PROMPT}\n{EXAMPLE_PROMPT}\n{SCHEMA_PROMPT}",
+        template=f"{BASE_PROMPT}\n{HEAD_TAIL_PROMPT}\n{INSTRUCTION_PROMPT}\n{NODE_RELATION_EXAMPLE_PROMPT}\n{EXAMPLE_PROMPT}\n{SCHEMA_PROMPT}",
         input_variables=["input"],
         partial_variables={
             "schema": parser.get_format_instructions(),
