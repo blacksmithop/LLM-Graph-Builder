@@ -191,7 +191,10 @@ class Neo4JKnowledgeGraph:
                             )
                             relation = similar_relation
 
-                            if relation in RELATION_BLACKLIST:
+                            if relation in RELATION_BLACKLIST or len(relation) > 100:
+                                logging.warning(
+                                    f"Relation is too descriptive | Relation : {relation[:100]}"
+                                )
                                 continue
                         except Exception:
                             pass
