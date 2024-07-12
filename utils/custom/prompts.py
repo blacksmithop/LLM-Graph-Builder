@@ -22,13 +22,8 @@ HEAD_TAIL_PROMPT = """
 """
 
 # For creating chained Entity Nodes
-CORRELATION_PROMPT = """
-Try to extract nodes that are connected to one another.
-An example for this is a "head" that is related to a "tail" and the "tail" is the "head" for a subsequent "tail".
-Follow this pattern:
-Doctor -> {{relation}} -> Drug -> {{relation}} -> Therapy -> {{relation}} -> Clinical Trial
-
-Use this for inter-connected entities.
+CORRELATION_EXAMPLE_PROMPT = """
+Below are a number of examples of text and their extracted entities and relationships.
 Eg: 
 Docetaxel alone is the approved therapy in second line stage IV NSCLC. but often HCPs use other drugs ( with the exception of patients with tumors harboring targeted alterations). In his center: Paclitaxel (80 to 90mg/m2 in a weekly schedule) plus bevacizumab (7.5 to 15mg/kg every 21 days) is a standard regimen as second line or third line treatment in stage IV NSCLC. The toxicity profile is acceptable. The results of the IFCT 1103 ULTIMATE study place weekly paclitaxel plus bevacizumab as a valid option in this population. However, docétaxel is used for clinical trial as second line comparator arm
 {{

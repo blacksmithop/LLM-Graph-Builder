@@ -5,7 +5,7 @@ from langchain_core.output_parsers import JsonOutputParser
 
 from utils.common.llm_core import llm
 from utils.custom.models import UnstructuredRelationNodes
-from utils.custom.prompts import (BASE_PROMPT, CORRELATION_PROMPT, EXAMPLE_PROMPT,
+from utils.custom.prompts import (BASE_PROMPT, CORRELATION_EXAMPLE_PROMPT, EXAMPLE_PROMPT,
                                   HEAD_TAIL_PROMPT, INSTRUCTION_PROMPT,
                                   NODE_RELATION_EXAMPLE_PROMPT, SCHEMA_PROMPT)
 
@@ -42,7 +42,7 @@ def get_graph_chain_v3(
     examples: List[Dict] = examples,
 ):
     human_prompt = PromptTemplate(
-        template=f"{BASE_PROMPT}\n{HEAD_TAIL_PROMPT}\n{CORRELATION_PROMPT}\n{INSTRUCTION_PROMPT}\n{NODE_RELATION_EXAMPLE_PROMPT}\n{SCHEMA_PROMPT}",
+        template=f"{BASE_PROMPT}\n{HEAD_TAIL_PROMPT}\n{INSTRUCTION_PROMPT}\n{NODE_RELATION_EXAMPLE_PROMPT}\n{CORRELATION_EXAMPLE_PROMPT}\n{SCHEMA_PROMPT}",
         input_variables=["input"],
         partial_variables={
             "schema": parser.get_format_instructions(),
