@@ -25,32 +25,51 @@ HEAD_TAIL_PROMPT = """
 CORRELATION_PROMPT = """
 Try to extract nodes that are connected to one another.
 An example for this is a "head" that is related to a "tail" and the "tail" is the "head" for a subsequent "tail".
+Follow this pattern:
+Doctor -> {{relation}} -> Drug -> {{relation}} -> Therapy -> {{relation}} -> Clinical Trial
+
 Use this for inter-connected entities.
-Eg: A HCP might recommend a certain Drug for trating a particular Disease which was used in a Clinical Trial
+Eg: 
+Docetaxel alone is the approved therapy in second line stage IV NSCLC. but often HCPs use other drugs ( with the exception of patients with tumors harboring targeted alterations). In his center: Paclitaxel (80 to 90mg/m2 in a weekly schedule) plus bevacizumab (7.5 to 15mg/kg every 21 days) is a standard regimen as second line or third line treatment in stage IV NSCLC. The toxicity profile is acceptable. The results of the IFCT 1103 ULTIMATE study place weekly paclitaxel plus bevacizumab as a valid option in this population. However, docétaxel is used for clinical trial as second line comparator arm
 {{
-"nodes": {{
+"nodes": 
+{{
         [
-                {{
-                        "head": "HCP",
-                        "head_type": "Person",
-                        "relation": "RECCOMEND_USING",
-                        "tail": "Lenvatinib",
-                        "tail_type": "Drug",
-                }},
-                {{
-                        "head": "Lenvatinib",
-                        "head_type": "Drug",
-                        "relation": "IS_USED_TO_TREAT",
-                        "tail": "Lung Cancer",
-                        "tail_type": "Disease",
-                }},
-                {{
-                        "head": "Lung Cancer",
-                        "head_type": "Disease",
-                        "relation": "WAS_USED_IN",
-                        "tail": "Ipsen Trial",
-                        "tail_type": "Clinical Trial",
-                }}
+        {{
+                "head": "HCP",
+                "head_type": "Person",
+                "relation": "APPROVED_THERAPY",
+                "tail": "Docetaxel",
+                "tail_type": "Drug",
+        }},
+        {{
+                "head": "HCP",
+                "head_type": "Person",
+                "relation": "IS_STANDARD_REGIMEN",
+                "tail": "Paclitaxel and Bevacizumab",
+                "tail_type": "Drug",
+        }},
+        {{
+                "head": "Paclitaxel and Bevacizumab",
+                "head_type": "Drug",
+                "relation": "SECOND_OR_THIRD_LINE_TREATMENT",
+                "tail": "stage IV NSCLC",
+                "tail_type": "Disease",
+        }},
+        {{
+                "head": "Paclitaxel and Bevacizumab",
+                "head_type": "Drug",
+                "relation": "VALID_OPTION_IN_POPULATION",
+                "tail": "IFCT 1103 ULTIMATE study",
+                "tail_type": "Clinical Trial",
+        }},
+        {{
+                "head": "IFCT 1103 ULTIMATE study",
+                "head_type": "Clinical Trial",
+                "relation": "SECOND_LINE_COMPARATOR",
+                "tail": "Docetaxel",
+                "tail_type": "Drug",
+        }}
         ]
 }}
 """
