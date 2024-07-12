@@ -5,7 +5,7 @@ from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
 from langchain_core.prompts import (ChatPromptTemplate,
                                     HumanMessagePromptTemplate, PromptTemplate)
 
-from utils.common.openi_core import gpt3_llm, gpt4_llm
+from utils.common.llm_core import llm
 from utils.custom.models import UnstructuredRelation
 
 parser = JsonOutputParser(pydantic_object=UnstructuredRelation)
@@ -89,7 +89,7 @@ def get_graph_chain(
     prompt = get_graph_creation_prompt(
         node_labels=node_labels, rel_types=rel_types, examples=examples
     )
-    chain = prompt | gpt3_llm | JsonOutputParser()
+    chain = prompt | llm | JsonOutputParser()
     return chain
 
 
@@ -106,4 +106,4 @@ Answer:
 """
 )
 
-follow_up_chain = follow_up_prompt | gpt4_llm | StrOutputParser()
+follow_up_chain = follow_up_prompt | llm | StrOutputParser()

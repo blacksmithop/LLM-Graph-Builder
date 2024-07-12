@@ -1,12 +1,6 @@
-allowed_relations = [
- 
-]
+allowed_relations = []
 
-allowed_nodes = [
-  
-]
+allowed_nodes = []
 
 
-examples = [
-   
-]
+examples = []
