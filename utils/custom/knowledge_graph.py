@@ -29,6 +29,7 @@ class Neo4JKnowledgeGraph:
     ) -> None:
         self.document_name = document_name
 
+        logging.info(f"Use Neo4j Database - {getenv('NEO4J_DATABASE')}")
         self.graph = Neo4jGraph(
             url=getenv("NEO4J_URL"),
             database=getenv("NEO4J_DATABASE"),
@@ -176,6 +177,11 @@ class Neo4JKnowledgeGraph:
                         if head == tail:
                             logging.warning(
                                 f"Ignoring circular relation [{head}] --{relation}-- [{tail}]"
+                            )
+                            continue
+                        elif len(head) > 30 or len(tail) > 30:
+                            logging.warning(
+                                f"Identified head/tail with long text\nHead: {head}\nTail: {tail}"
                             )
                             continue
 
