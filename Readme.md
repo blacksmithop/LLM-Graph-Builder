@@ -33,7 +33,7 @@ You can use Azure OpenAI, Ollama or your custom provider. You just need to defin
 Once complete you can set your `FILE_PATH` in [knowledge_graph_creator.py](./knowledge_graph_creator.py) and run the python script. It should you populate you Neo4J database.
 
 
-The Builder supports two modes of operation when creating the nodes. This can be toggled by setting `use_v2_chain` in [Neo4JKnowledgeGraph](/utils/custom/knowledge_graph.py#L40). When set to `False` fewer nodes will be created. Defaults to `True`.
+The Builder supports different modes of operation when creating the nodes. This can be toggled by changing `prompt_version` in [Neo4JKnowledgeGraph](/utils/custom/knowledge_graph.py#L40). Defaults to `2`.
 
 
 

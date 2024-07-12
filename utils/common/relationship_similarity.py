@@ -17,6 +17,7 @@ class EmbeddingSimilarity:
 
     def get_similar_relationship(self, entity: str):
         entity = entity.title()
+        entity_norm = " ".join(entity.split("_"))
         matching_key = next(
             (
                 key
@@ -31,7 +32,7 @@ class EmbeddingSimilarity:
         # if entity in self.emb_cache:
         # return True, entity
 
-        entity_embedding = self.embeddings.embed_query(entity)
+        entity_embedding = self.embeddings.embed_query(entity_norm)
         self.emb_cache[entity] = entity_embedding
 
         for key in self.similar_entities.keys():
