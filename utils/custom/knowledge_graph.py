@@ -13,7 +13,7 @@ from tqdm import tqdm
 from utils.common.llm_core import embeddings, llm
 from utils.common.relationship_similarity import EmbeddingSimilarity
 from utils.custom.chains import get_graph_chain
-from utils.custom.graph_agent import get_graph_chain_v2
+from utils.custom.graph_agent import get_graph_chain_v2, get_graph_chain_v3
 
 RELATION_BLACKLIST = ["Document"]
 
@@ -25,7 +25,7 @@ class Neo4JKnowledgeGraph:
         node_labels: List[str] = [],
         rel_types: List[str] = [],
         examples: List[str] = [],
-        use_v2_chain: bool = True,
+        prompt_version: int = 2,
     ) -> None:
         self.document_name = document_name
 
@@ -37,16 +37,19 @@ class Neo4JKnowledgeGraph:
             refresh_schema=False,
             sanitize=True,
         )
-        self.use_v2_chain = use_v2_chain
+        self.prompt_version = prompt_version
         logging.info(
             f"Node labels - {node_labels}\nRelationship types - {rel_types[:10]}...\nExample nodes - {examples[:3]}..."
         )
         logging.debug(
-            f"Use V2 Chain (generates more nodes) - {['No', 'Yes'][use_v2_chain]}"
+            f"Prompt Version - {prompt_version}"
         )
 
-        self.chain = get_graph_chain(node_labels=node_labels, rel_types=rel_types)
-        self.graph_chain = get_graph_chain_v2(
+        self.chain_v1 = get_graph_chain(node_labels=node_labels, rel_types=rel_types)
+        self.chain_v2 = get_graph_chain_v2(
+            node_labels=node_labels, rel_types=rel_types, examples=examples
+        )
+        self.chain_v3 = get_graph_chain_v3(
             node_labels=node_labels, rel_types=rel_types, examples=examples
         )
 
@@ -228,14 +231,21 @@ class Neo4JKnowledgeGraph:
             logging.error("Insights already present in database")
 
     def get_insight_entity_relationships(self, insight: str):
-        if self.use_v2_chain:
-            try:
-                entity_relationship = self.graph_chain.invoke({"input": insight})[
-                    "nodes"
-                ]
-            except Exception as e:
-                logging.info("Got invalid JSON in v2 using default chain")
-                entity_relationship = self.chain.invoke({"input": insight})
-        else:
-            entity_relationship = self.chain.invoke({"input": insight})
+        chain_version = {
+            1: self.chain_v1,
+            2: self.chain_v2,
+            3: self.chain_v3
+        }
+        
+        chain = chain_version.get(self.prompt_version, self.chain_v1)
+        
+        try:
+            entity_relationship = chain.invoke({"input": insight})
+        except Exception as e:
+            logging.info(f"Got invalid JSON when using prompt v{self.prompt_version}")
+            entity_relationship = self.chain_v1.invoke({"input": insight})
+            
+        if type(entity_relationship) == dict and "nodes" in entity_relationship:
+            entity_relationship = entity_relationship["nodes"]
+
         return entity_relationship
