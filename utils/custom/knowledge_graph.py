@@ -172,7 +172,7 @@ class Neo4JKnowledgeGraph:
 
                         if head == tail:
                             logging.warning(
-                                f"Ignoring circular relation [{head}]] --{relation}-- [{tail}] Skipping"
+                                f"Ignoring circular relation [{head}] --{relation}-- [{tail}]"
                             )
                             continue
 
