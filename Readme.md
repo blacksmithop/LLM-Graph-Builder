@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 ### Configure Neo4J (Dozerdb)
 
-Next, install Neo4j. I recommend doing this [Dozerb](https://dozerdb.org/) as it offers enterprise features in the community edition. You can use this [script](./install_dozerdb.sh] to get a docker container running.
+Next, install Neo4j. I recommend doing this [Dozerb](https://dozerdb.org/) as it offers enterprise features in the community edition. You can use this [script](./install_dozerdb.sh) to get a docker container running.
 
 ### Configure LLM, Embeddings
 
