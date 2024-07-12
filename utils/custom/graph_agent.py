@@ -42,7 +42,7 @@ def get_graph_chain_v3(
     examples: List[Dict] = examples,
 ):
     human_prompt = PromptTemplate(
-        template=f"{BASE_PROMPT}\n{HEAD_TAIL_PROMPT}\n{CORRELATION_PROMPT}\n{INSTRUCTION_PROMPT}\n{NODE_RELATION_EXAMPLE_PROMPT}\n{EXAMPLE_PROMPT}\n{SCHEMA_PROMPT}",
+        template=f"{BASE_PROMPT}\n{HEAD_TAIL_PROMPT}\n{CORRELATION_PROMPT}\n{INSTRUCTION_PROMPT}\n{NODE_RELATION_EXAMPLE_PROMPT}\n{SCHEMA_PROMPT}",
         input_variables=["input"],
         partial_variables={
             "schema": parser.get_format_instructions(),
