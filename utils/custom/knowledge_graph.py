@@ -1,7 +1,7 @@
 import logging
 from os import getenv
 from time import sleep
-from typing import List
+from typing import List, Literal
 
 from langchain.docstore.document import Document
 from langchain_community.chains.graph_qa.cypher import GraphCypherQAChain
@@ -25,7 +25,7 @@ class Neo4JKnowledgeGraph:
         node_labels: List[str] = [],
         rel_types: List[str] = [],
         examples: List[str] = [],
-        prompt_version: int = 2,
+        prompt_version: Literal[1,2,3] = 1,
     ) -> None:
         self.document_name = document_name
 
