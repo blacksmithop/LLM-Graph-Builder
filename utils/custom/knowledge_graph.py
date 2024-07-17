@@ -115,7 +115,6 @@ class Neo4JKnowledgeGraph:
 
     def create_knowledge_graph(self, documents: List[Document]):
         insight_count = self.get_insight_count()
-        logging.info(f"Insights - {insight_count} Documents")
 
         if insight_count + 1 < len(documents):  # TODO: Allow for adding new nodes
             document_node = self.get_document_node()
