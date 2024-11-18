@@ -54,3 +54,7 @@ You can perform QA on your knowledge graph using the streamlit application at [g
 ```bash
 streamlit run graph_qa_chatbot.py
 ```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=blacksmithop/LLM-Graph-Builder&type=Date)](https://star-history.com/#blacksmithop/LLM-Graph-Builder&Date)
